@@ -10,6 +10,15 @@
 #include <Adafruit_SSD1306.h>
 #include <Servo.h>
 
+#include <Adafruit_NeoPixel.h>
+
+#define PIN 25
+
+// When we setup the NeoPixel library, we tell it how many pixels, and which pin to use to send signals.
+// Note that for older NeoPixel strips you might need to change the third parameter--see the strandtest
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(1, PIN, NEO_GRB + NEO_KHZ800);
+ 
+
 #define SCREEN_WIDTH 128  // OLED display width, in pixels
 #define SCREEN_HEIGHT 64  // OLED display height, in pixels
 
@@ -322,6 +331,8 @@ void setup() {
 
   Serial.begin(115200);
 
+  pixels.begin(); // This initializes the NeoPixel library.
+
   // testing
   Serial.print("Testing DC Motor...");
 
@@ -386,6 +397,9 @@ void setup() {
 }
 
 void loop() {
+
+  pixels.setPixelColor(0, pixels.Color(255, 255, 255)); 
+pixels.show(); // This sends the updated pixel color to the hardware.
 
   setDirection2(false);
 
