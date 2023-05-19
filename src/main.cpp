@@ -211,10 +211,6 @@ void IRAM_ATTR reportSensorRead3()
   else
   {
 
-    /*     if ((hallSensed3 % 4) == 0)
-        {
-
-        } */
     servoState3 = 80;
     servoState2 = 80;
     servoState1 = 0;
@@ -222,28 +218,22 @@ void IRAM_ATTR reportSensorRead3()
 }
 void IRAM_ATTR reportSensorRead2()
 {
+  hallSensed2 += 1;
   direction1 = false;
- /*  hallSensed2 += 1;
-  if ((hallSensed2 % 2) == 0)
-  {
-    servoState3 = 80;
-  }
-  else
-  {
-    servoState3 = 0;
-  } */
+
 }
 void IRAM_ATTR reportSensorRead4()
 {
   hallSensed4 += 1;
-  if ((hallSensed4 % 2) == 0)
+  direction1 = true;
+  /* if ((hallSensed4 % 2) == 0)
   {
     servoState4 = 80;
   }
   else
   {
     servoState4 = 0;
-  }
+  } */
 }
 
 class MyCallbacks : public BLECharacteristicCallbacks
@@ -283,18 +273,21 @@ void reportDutyCycle(int dutyCycle)
   if (servoState2 != servoState2Previous)
   {
     servoState2Previous = servoState2;
+    delay(250);
     myservo2.write(servoState2);
   }
 
   if (servoState3 != servoState3Previous)
   {
     servoState3Previous = servoState3;
+    delay(250);
     myservo3.write(servoState3);
   }
 
   if (servoState4 != servoState4Previous)
   {
     servoState4Previous = servoState4;
+    delay(250);
     myservo4.write(servoState4);
   }
 
@@ -310,64 +303,7 @@ void reportDutyCycle(int dutyCycle)
     setDirection2(direction2);
   }
 
-  /*   if (hallSensedPrevious1 < hallSensed1)
-    {
-      pTxCharacteristicSensor1->setValue(hallSensed1);
-      pTxCharacteristicSensor1->notify();
-      hallSensedPrevious1 = hallSensed1;
-      if ((hallSensed1 % 2) == 0)
-      {
-        myservo1.write(80);
-      }
-      else
-      {
-        myservo1.write(0);
-      }
-    }
 
-    if (hallSensedPrevious2 < hallSensed2)
-    {
-      hallSensedPrevious2 = hallSensed2;
-      if ((hallSensed2 % 2) == 0)
-      {
-        myservo2.write(80);
-      }
-      else
-      {
-        myservo2.write(0);
-      }
-    }
-
-    if (hallSensedPrevious3 < hallSensed3)
-    {
-      hallSensedPrevious3 = hallSensed3;
-      if ((hallSensed3 % 2) == 0)
-      {
-        myservo3.write(80);
-      }
-      else
-      {
-        myservo3.write(0);
-      }
-    }
-
-    if (hallSensedPrevious4 < hallSensed4)
-    {
-      hallSensedPrevious4 = hallSensed4;
-      if ((hallSensed4 % 2) == 0)
-      {
-        myservo4.write(80);
-      }
-      else
-      {
-        myservo4.write(0);
-      }
-    } */
-
-  //   int rawValue = analogRead(sensorPin);
-  // float voltage = rawValue * (5.0/1023) * 1000;
-
-  // float resitance = 10000 * ( voltage / ( 5000.0 - voltage) );
 
   display.fillRect(0, 20, 128, 10, BLACK);
   display.setCursor(0, 20);
@@ -516,43 +452,5 @@ void loop()
 
   reportDutyCycle(dutyCycle1);
   delay(200);
-  /*  while (dutyCycle1 <= 255)
-   {
 
-     dutyCycle1 = dutyCycle1 + 1;
-     reportDutyCycle(dutyCycle1);
-     delay(ACCELERATION_TIME);
-   }
-   setDirection2(true);
-   while (dutyCycle1 > 200)
-   {
-     reportDutyCycle(dutyCycle1);
-     dutyCycle1 = dutyCycle1 - 1;
-     delay(DECELERATION_TIME);
-   }
-   dutyCycle1 = 0;
-   reportDutyCycle(dutyCycle1);
-   delay(WAIT_TIME);
-   setDirection1(true);
-   dutyCycle1 = 200;
-   // myservo.write(0);
-   setDirection2(false);
-   while (dutyCycle1 <= 255)
-   {
-     reportDutyCycle(dutyCycle1);
-     dutyCycle1 = dutyCycle1 + 1;
-     delay(ACCELERATION_TIME);
-   }
-   setDirection2(true);
-   while (dutyCycle1 > 200)
-   {
-     reportDutyCycle(dutyCycle1);
-     dutyCycle1 = dutyCycle1 - 1;
-     delay(DECELERATION_TIME);
-   }
-   dutyCycle1 = 0;
-   reportDutyCycle(dutyCycle1);
-   delay(WAIT_TIME);
-   setDirection1(false);
-   dutyCycle1 = 200; */
 }
