@@ -220,12 +220,14 @@ void IRAM_ATTR reportSensorRead2()
 {
   hallSensed2 += 1;
   direction1 = false;
+  direction2 = false;
 
 }
 void IRAM_ATTR reportSensorRead4()
 {
   hallSensed4 += 1;
   direction1 = true;
+  direction2 = true;
   /* if ((hallSensed4 % 2) == 0)
   {
     servoState4 = 80;
@@ -253,10 +255,12 @@ class MyCallbacks : public BLECharacteristicCallbacks
     if (rxValue == "backward")
     {
       direction1 = false;
+      direction2 = false;
     }
     if (rxValue == "forward")
     {
       direction1 = true;
+      direction2 = true;
     }
   }
 };
@@ -273,21 +277,21 @@ void reportDutyCycle(int dutyCycle)
   if (servoState2 != servoState2Previous)
   {
     servoState2Previous = servoState2;
-    delay(250);
+    //delay(250);
     myservo2.write(servoState2);
   }
 
   if (servoState3 != servoState3Previous)
   {
     servoState3Previous = servoState3;
-    delay(250);
+    //delay(250);
     myservo3.write(servoState3);
   }
 
   if (servoState4 != servoState4Previous)
   {
     servoState4Previous = servoState4;
-    delay(250);
+    //delay(250);
     myservo4.write(servoState4);
   }
 
@@ -436,11 +440,12 @@ void setup()
   pAdvertising->setMinPreferred(0x12);
   BLEDevice::startAdvertising();
   Serial.println("Characteristic defined!");
-  direction2 = false;
+  direction2 = true;
 
   direction1 = true;
 
   dutyCycle1 = 235;
+  dutyCycle2 = 220;
 }
 
 void loop()
@@ -451,6 +456,7 @@ void loop()
   pixels.show(); // This sends the updated pixel color to the hardware.
 
   reportDutyCycle(dutyCycle1);
+  reportDutyCycle(dutyCycle2);
   delay(200);
 
 }
