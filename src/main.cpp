@@ -353,14 +353,14 @@ void reportDutyCycle(int dutyCycle)
 
 void setup()
 {
-  pinMode(sensorPin1, INPUT_PULLUP);
-  pinMode(sensorPin2, INPUT_PULLUP);
+  pinMode(sensorPin1, INPUT);
+  pinMode(sensorPin2, INPUT);
   pinMode(sensorPin3, INPUT_PULLUP);
   pinMode(sensorPin4, INPUT_PULLUP);
-  attachInterrupt(sensorPin1, reportSensorRead1, HIGH);
-  attachInterrupt(sensorPin2, reportSensorRead2, HIGH);
-  attachInterrupt(sensorPin3, reportSensorRead3, HIGH);
-  attachInterrupt(sensorPin4, reportSensorRead4, HIGH);
+  attachInterrupt(sensorPin1, reportSensorRead1, RISING);
+  attachInterrupt(sensorPin2, reportSensorRead2, RISING);
+  attachInterrupt(sensorPin3, reportSensorRead3, RISING);
+  attachInterrupt(sensorPin4, reportSensorRead4, RISING);
 
   myservo1.attach(servo1Pin);
   myservo2.attach(servo2Pin);
