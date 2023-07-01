@@ -40,15 +40,23 @@ Servo myservo4; // create servo object to control a servo
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
+volatile unsigned long DebounceTimer1 = millis();
+volatile unsigned long DebounceTimer2 = millis();
+volatile unsigned long DebounceTimer3 = millis();
+volatile unsigned long DebounceTimer4 = millis();
+volatile unsigned int delayTime = 100;
+
 uint32_t hallSensed1 = 0;
 uint32_t hallSensed2 = 0;
 uint32_t hallSensed3 = 0;
 uint32_t hallSensed4 = 0;
 
-uint32_t hallSensedPrevious1 = 0;
+/* uint32_t hallSensedPrevious1 = 0;
 uint32_t hallSensedPrevious2 = 0;
 uint32_t hallSensedPrevious3 = 0;
-uint32_t hallSensedPrevious4 = 0;
+uint32_t hallSensedPrevious4 = 0; */
+
+hw_timer_t *My_timer = NULL;
 
 int servoState1 = 0;  // double
 int servoState2 = 0;  // up out
@@ -85,7 +93,6 @@ const int pwmChannel2 = 6;
 const int resolution = 8;
 int dutyCycle1 = 220;
 int dutyCycle2 = 250;
-
 
 bool direction1 = false;
 bool direction2 = false;
@@ -179,63 +186,83 @@ void setDirection2(boolean dir)
   reportDirection2(dir);
 }
 
+void IRAM_ATTR onTimer()
+{
+  direction2 = !direction2;
+}
+
 void IRAM_ATTR reportSensorRead1()
 {
-  hallSensed1 += 1;
+  if (millis() > DebounceTimer1 + delayTime)
+  {
+    DebounceTimer1 = millis();
+    hallSensed1 += 1;
 
-  if ((hallSensed1 % 2) == 0)
-  {
-    servoState1 = 80;
+    if ((hallSensed1 % 2) == 0)
+    {
+      servoState1 = 80;
+    }
+    else
+    {
+      servoState1 = 0;
+    }
+    servoState3 = 0;
+    servoState2 = 80;
   }
-  else
-  {
-    servoState1 = 0;
-  }
-  servoState3 = 0;
-  servoState2 = 80;
 }
 void IRAM_ATTR reportSensorRead3()
 {
-  hallSensed3 += 1;
-  if (direction1)
+  if (millis() > DebounceTimer3 + delayTime)
   {
-
-    if ((hallSensed3 % 4) == 0)
+    DebounceTimer3 = millis();
+    hallSensed3 += 1;
+    if (direction1)
     {
-      servoState2 = 0;
+
+      if ((hallSensed3 % 4) == 0)
+      {
+        servoState2 = 0;
+      }
+
+      servoState3 = 0;
+      servoState1 = 0;
     }
+    else
+    {
 
-    servoState3 = 0;
-    servoState1 = 0;
-  }
-  else
-  {
-
-    servoState3 = 80;
-    servoState2 = 80;
-    servoState1 = 0;
+      servoState3 = 80;
+      servoState2 = 80;
+      servoState1 = 0;
+    }
   }
 }
 void IRAM_ATTR reportSensorRead2()
 {
-  hallSensed2 += 1;
-  direction1 = false;
-  direction2 = false;
-
+  if (millis() > DebounceTimer2 + delayTime)
+  {
+    DebounceTimer2 = millis();
+    hallSensed2 += 1;
+    direction1 = false;
+    // direction2 = false;
+  }
 }
 void IRAM_ATTR reportSensorRead4()
 {
-  hallSensed4 += 1;
-  direction1 = true;
-  direction2 = true;
-  /* if ((hallSensed4 % 2) == 0)
+  if (millis() > DebounceTimer4 + delayTime)
   {
-    servoState4 = 80;
+    DebounceTimer4 = millis();
+    hallSensed4 += 1;
+    direction1 = true;
+    // direction2 = true;
+    /* if ((hallSensed4 % 2) == 0)
+    {
+      servoState4 = 80;
+    }
+    else
+    {
+      servoState4 = 0;
+    } */
   }
-  else
-  {
-    servoState4 = 0;
-  } */
 }
 
 class MyCallbacks : public BLECharacteristicCallbacks
@@ -277,21 +304,21 @@ void reportDutyCycle(int dutyCycle)
   if (servoState2 != servoState2Previous)
   {
     servoState2Previous = servoState2;
-    //delay(250);
+    // delay(250);
     myservo2.write(servoState2);
   }
 
   if (servoState3 != servoState3Previous)
   {
     servoState3Previous = servoState3;
-    //delay(250);
+    // delay(250);
     myservo3.write(servoState3);
   }
 
   if (servoState4 != servoState4Previous)
   {
     servoState4Previous = servoState4;
-    //delay(250);
+    // delay(250);
     myservo4.write(servoState4);
   }
 
@@ -301,13 +328,11 @@ void reportDutyCycle(int dutyCycle)
     setDirection1(direction1);
   }
 
-    if (direction2 != direction2Previous)
+  if (direction2 != direction2Previous)
   {
     direction2Previous = direction2;
     setDirection2(direction2);
   }
-
-
 
   display.fillRect(0, 20, 128, 10, BLACK);
   display.setCursor(0, 20);
@@ -353,41 +378,10 @@ void reportDutyCycle(int dutyCycle)
 
 void setup()
 {
-  pinMode(sensorPin1, INPUT);
-  pinMode(sensorPin2, INPUT);
-  pinMode(sensorPin3, INPUT_PULLUP);
-  pinMode(sensorPin4, INPUT_PULLUP);
-  attachInterrupt(sensorPin1, reportSensorRead1, RISING);
-  attachInterrupt(sensorPin2, reportSensorRead2, RISING);
-  attachInterrupt(sensorPin3, reportSensorRead3, RISING);
-  attachInterrupt(sensorPin4, reportSensorRead4, RISING);
-
-  myservo1.attach(servo1Pin);
-  myservo2.attach(servo2Pin);
-  myservo3.attach(servo3Pin);
-  myservo4.attach(servo4Pin);
-  // sets the pins as outputs:
-  pinMode(motor1Pin1, OUTPUT);
-  pinMode(motor1Pin2, OUTPUT);
-  pinMode(enable1Pin, OUTPUT);
-  pinMode(motor2Pin1, OUTPUT);
-  pinMode(motor2Pin2, OUTPUT);
-  pinMode(enable2Pin, OUTPUT);
-
-  // configure LED PWM functionalitites
-  ledcSetup(pwmChannel1, freq, resolution);
-  ledcSetup(pwmChannel2, freq, resolution);
-
-  // attach the channel to the GPIO to be controlled
-  ledcAttachPin(enable1Pin, pwmChannel1);
-  ledcAttachPin(enable2Pin, pwmChannel2);
 
   Serial.begin(115200);
 
   pixels.begin(); // This initializes the NeoPixel library.
-
-  // testing
-  Serial.print("Testing DC Motor...");
 
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C))
   { // Address 0x3D for 128x64
@@ -440,12 +434,47 @@ void setup()
   pAdvertising->setMinPreferred(0x12);
   BLEDevice::startAdvertising();
   Serial.println("Characteristic defined!");
+
+  pinMode(sensorPin1, INPUT_PULLUP);
+  pinMode(sensorPin2, INPUT_PULLUP);
+  pinMode(sensorPin3, INPUT_PULLUP);
+  pinMode(sensorPin4, INPUT_PULLUP);
+  attachInterrupt(sensorPin1, reportSensorRead1, RISING);
+  attachInterrupt(sensorPin2, reportSensorRead2, RISING);
+  attachInterrupt(sensorPin3, reportSensorRead3, RISING);
+  attachInterrupt(sensorPin4, reportSensorRead4, RISING);
+
+  myservo1.attach(servo1Pin);
+  myservo2.attach(servo2Pin);
+  myservo3.attach(servo3Pin);
+  myservo4.attach(servo4Pin);
+  // sets the pins as outputs:
+  pinMode(motor1Pin1, OUTPUT);
+  pinMode(motor1Pin2, OUTPUT);
+  pinMode(enable1Pin, OUTPUT);
+  pinMode(motor2Pin1, OUTPUT);
+  pinMode(motor2Pin2, OUTPUT);
+  pinMode(enable2Pin, OUTPUT);
+
+  // configure LED PWM functionalitites
+  ledcSetup(pwmChannel1, freq, resolution);
+  ledcSetup(pwmChannel2, freq, resolution);
+
+  // attach the channel to the GPIO to be controlled
+  ledcAttachPin(enable1Pin, pwmChannel1);
+  ledcAttachPin(enable2Pin, pwmChannel2);
+
   direction2 = true;
 
   direction1 = true;
 
   dutyCycle1 = 235;
   dutyCycle2 = 220;
+
+  My_timer = timerBegin(0, 80, true);
+  timerAttachInterrupt(My_timer, &onTimer, true);
+  timerAlarmWrite(My_timer, 8000000, true);
+  timerAlarmEnable(My_timer);
 }
 
 void loop()
@@ -458,5 +487,4 @@ void loop()
   reportDutyCycle(dutyCycle1);
   reportDutyCycle(dutyCycle2);
   delay(200);
-
 }
