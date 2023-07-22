@@ -98,6 +98,7 @@ bool direction1 = false;
 bool direction2 = false;
 bool direction1Previous = false;
 bool direction2Previous = false;
+volatile unsigned long direction1Schedule = millis();
 
 void reportDirection1(bool dir1)
 {
@@ -242,6 +243,7 @@ void IRAM_ATTR reportSensorRead2()
   {
     DebounceTimer2 = millis();
     hallSensed2 += 1;
+    direction1Schedule = millis() + 3000;
     direction1 = false;
     // direction2 = false;
   }
@@ -252,6 +254,7 @@ void IRAM_ATTR reportSensorRead4()
   {
     DebounceTimer4 = millis();
     hallSensed4 += 1;
+    direction1Schedule = millis() + 3000;
     direction1 = true;
     // direction2 = true;
     /* if ((hallSensed4 % 2) == 0)
@@ -323,10 +326,13 @@ void reportDutyCycle(int dutyCycle)
   }
 
   if (direction1 != direction1Previous)
-  {
-    direction1Previous = direction1;
-    setDirection1(direction1);
-  }
+    if (millis() > direction1Schedule)
+    {
+      {
+        direction1Previous = direction1;
+        setDirection1(direction1);
+      }
+    }
 
   if (direction2 != direction2Previous)
   {
