@@ -51,6 +51,8 @@ uint32_t hallSensed2 = 0;
 uint32_t hallSensed3 = 0;
 uint32_t hallSensed4 = 0;
 
+uint32_t direction2Cycles = 0;
+
 /* uint32_t hallSensedPrevious1 = 0;
 uint32_t hallSensedPrevious2 = 0;
 uint32_t hallSensedPrevious3 = 0;
@@ -85,6 +87,10 @@ int sensorPin1 = 13; // Digital-Pin
 int sensorPin2 = 27; // Digital-Pin
 int sensorPin3 = 33; // Digital-Pin
 int sensorPin4 = 32; // Digital-Pin
+
+int relayPin = 26;
+
+bool twoTrains = false;
 
 // Setting PWM properties
 const int freq = 30000;
@@ -190,6 +196,18 @@ void setDirection2(boolean dir)
 void IRAM_ATTR onTimer()
 {
   direction2 = !direction2;
+  if (!direction2)
+  {
+    direction2Cycles += 1;
+  }
+  if ((direction2Cycles % 2) == 0)
+  {
+    servoState4 = 80;
+  }
+  else
+  {
+    servoState4 = 0;
+  }
 }
 
 void IRAM_ATTR reportSensorRead1()
@@ -209,6 +227,10 @@ void IRAM_ATTR reportSensorRead1()
     }
     servoState3 = 0;
     servoState2 = 80;
+  }
+  if (!twoTrains)
+  {
+    digitalWrite(relayPin, LOW);
   }
 }
 void IRAM_ATTR reportSensorRead3()
@@ -236,6 +258,10 @@ void IRAM_ATTR reportSensorRead3()
       servoState1 = 0;
     }
   }
+  if (!twoTrains)
+  {
+    digitalWrite(relayPin, LOW);
+  }
 }
 void IRAM_ATTR reportSensorRead2()
 {
@@ -245,6 +271,11 @@ void IRAM_ATTR reportSensorRead2()
     hallSensed2 += 1;
     direction1Schedule = millis() + 3000;
     direction1 = false;
+    if (twoTrains)
+    {
+      digitalWrite(relayPin, HIGH); // two trains
+      servoState3 = 80;             // two trains
+    }
     // direction2 = false;
   }
 }
@@ -256,6 +287,17 @@ void IRAM_ATTR reportSensorRead4()
     hallSensed4 += 1;
     direction1Schedule = millis() + 3000;
     direction1 = true;
+
+    if (twoTrains)
+    {
+      digitalWrite(relayPin, LOW); // two trains
+      servoState3 = 0;             // two trains
+    }
+    else
+    {
+      digitalWrite(relayPin, HIGH);
+    }
+
     // direction2 = true;
     /* if ((hallSensed4 % 2) == 0)
     {
@@ -384,6 +426,8 @@ void reportDutyCycle(int dutyCycle)
 
 void setup()
 {
+  pinMode(relayPin, OUTPUT);
+  digitalWrite(relayPin, HIGH);
 
   Serial.begin(115200);
 
