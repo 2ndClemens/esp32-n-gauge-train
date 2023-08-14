@@ -90,7 +90,7 @@ int sensorPin4 = 32; // Digital-Pin
 
 int relayPin = 26;
 
-bool twoTrains = false;
+bool twoTrains = true;
 
 // Setting PWM properties
 const int freq = 30000;
@@ -210,7 +210,7 @@ void IRAM_ATTR onTimer()
   }
 }
 
-void IRAM_ATTR reportSensorRead1()
+void IRAM_ATTR reportSensorRead1() // inner circle sensor
 {
   if (millis() > DebounceTimer1 + delayTime)
   {
@@ -228,12 +228,21 @@ void IRAM_ATTR reportSensorRead1()
     servoState3 = 0;
     servoState2 = 80;
   }
-  if (!twoTrains)
+  if (twoTrains)
+  {
+    if ((hallSensed1 % 4) == 0)
+    {
+      digitalWrite(relayPin, HIGH); // Stop in inner circle
+      direction1Schedule = millis() + 3000;
+      direction1 = false;
+    }
+  }
+  else
   {
     digitalWrite(relayPin, LOW);
   }
 }
-void IRAM_ATTR reportSensorRead3()
+void IRAM_ATTR reportSensorRead3() // tunnel sensor
 {
   if (millis() > DebounceTimer3 + delayTime)
   {
@@ -258,45 +267,76 @@ void IRAM_ATTR reportSensorRead3()
       servoState1 = 0;
     }
   }
-  if (!twoTrains)
+  /*   if (!twoTrains)
+    {
+      digitalWrite(relayPin, LOW);
+    } */
+  if (direction1 == true) // ccw
   {
-    digitalWrite(relayPin, LOW);
+    digitalWrite(relayPin, LOW); // activate inner curve
   }
 }
-void IRAM_ATTR reportSensorRead2()
+void IRAM_ATTR reportSensorRead2() // upper exit sensor
 {
   if (millis() > DebounceTimer2 + delayTime)
   {
     DebounceTimer2 = millis();
+    if (direction1 == false) // driving down cw
+    {
+      servoState1 = 0;  // activate outer circle
+      servoState2 = 0;  // upper exit switch to entering
+      servoState3 = 80; // lower exit switch allow exit
+    }
+    digitalWrite(relayPin, HIGH); // activate lower entry
+
     hallSensed2 += 1;
-    direction1Schedule = millis() + 3000;
-    direction1 = false;
     if (twoTrains)
     {
-      digitalWrite(relayPin, HIGH); // two trains
-      servoState3 = 80;             // two trains
+      servoState3 = 80; // lower exit switch allow exit
     }
+    else
+    {
+      direction1Schedule = millis() + 3000;
+      direction1 = false;
+    }
+    /* if (twoTrains)
+    {
+      digitalWrite(relayPin, HIGH); // two trains
+      servoState3 = 80; // lower exit switch allow entry
+    } */
     // direction2 = false;
   }
 }
-void IRAM_ATTR reportSensorRead4()
+void IRAM_ATTR reportSensorRead4() // lower exit sensor
 {
   if (millis() > DebounceTimer4 + delayTime)
   {
     DebounceTimer4 = millis();
     hallSensed4 += 1;
-    direction1Schedule = millis() + 3000;
-    direction1 = true;
 
     if (twoTrains)
     {
-      digitalWrite(relayPin, LOW); // two trains
-      servoState3 = 0;             // two trains
+      if (direction1 == false) // train exiting
+      {
+        digitalWrite(relayPin, LOW); // two trains
+        // servoState3 = 0;             // lower exit switch prevent entry
+        servoState2 = 0;             // upper exit switch to exiting
+        servoState1 = 80;            // activate inner circle
+      }
+      else // train entering
+      {
+        // digitalWrite(relayPin, LOW);
+        servoState3 = 80; // lower exit switch allow entry
+        servoState2 = 80; // upper exit switch to not exiting
+      }
     }
     else
     {
-      digitalWrite(relayPin, HIGH);
+      digitalWrite(relayPin, HIGH); // activate lower entry
     }
+
+    direction1Schedule = millis() + 3000;
+    direction1 = true;
 
     // direction2 = true;
     /* if ((hallSensed4 % 2) == 0)
