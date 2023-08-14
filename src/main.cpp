@@ -104,7 +104,10 @@ bool direction1 = false;
 bool direction2 = false;
 bool direction1Previous = false;
 bool direction2Previous = false;
+bool relayState = false;
+bool relayStatePrevious = false;
 volatile unsigned long direction1Schedule = millis();
+volatile unsigned long relaySchedule = millis();
 
 void reportDirection1(bool dir1)
 {
@@ -149,6 +152,18 @@ void reportDirection2(bool dir2)
     display.println("bw");
   }
   display.display();
+}
+
+void setRelay(boolean state)
+{
+  if (state == true)
+  {
+    digitalWrite(relayPin, HIGH);
+  }
+  else
+  {
+    digitalWrite(relayPin, LOW);
+  }
 }
 
 void setDirection1(boolean dir)
@@ -232,14 +247,15 @@ void IRAM_ATTR reportSensorRead1() // inner circle sensor
   {
     if ((hallSensed1 % 4) == 0)
     {
-      digitalWrite(relayPin, HIGH); // Stop in inner circle
+      relayState = true; // Stop in inner circle
+      // relaySchedule = millis() +3000;
       direction1Schedule = millis() + 3000;
       direction1 = false;
     }
   }
   else
   {
-    digitalWrite(relayPin, LOW);
+    relayState = false;
   }
 }
 void IRAM_ATTR reportSensorRead3() // tunnel sensor
@@ -273,7 +289,7 @@ void IRAM_ATTR reportSensorRead3() // tunnel sensor
     } */
   if (direction1 == true) // ccw
   {
-    digitalWrite(relayPin, LOW); // activate inner curve
+    relayState = false; // activate inner curve
   }
 }
 void IRAM_ATTR reportSensorRead2() // upper exit sensor
@@ -287,7 +303,7 @@ void IRAM_ATTR reportSensorRead2() // upper exit sensor
       servoState2 = 0;  // upper exit switch to entering
       servoState3 = 80; // lower exit switch allow exit
     }
-    digitalWrite(relayPin, HIGH); // activate lower entry
+    relayState = true; // activate lower entry
 
     hallSensed2 += 1;
     if (twoTrains)
@@ -318,10 +334,11 @@ void IRAM_ATTR reportSensorRead4() // lower exit sensor
     {
       if (direction1 == false) // train exiting
       {
-        digitalWrite(relayPin, LOW); // two trains
+        relayState = false; // two trains
+        relaySchedule = millis() +3000;
         // servoState3 = 0;             // lower exit switch prevent entry
-        servoState2 = 0;             // upper exit switch to exiting
-        servoState1 = 80;            // activate inner circle
+        servoState2 = 0;  // upper exit switch to exiting
+        servoState1 = 80; // activate inner circle
       }
       else // train entering
       {
@@ -332,7 +349,7 @@ void IRAM_ATTR reportSensorRead4() // lower exit sensor
     }
     else
     {
-      digitalWrite(relayPin, HIGH); // activate lower entry
+      relayState = true; // activate lower entry
     }
 
     direction1Schedule = millis() + 3000;
@@ -408,6 +425,7 @@ void reportDutyCycle(int dutyCycle)
   }
 
   if (direction1 != direction1Previous)
+  {
     if (millis() > direction1Schedule)
     {
       {
@@ -415,6 +433,17 @@ void reportDutyCycle(int dutyCycle)
         setDirection1(direction1);
       }
     }
+  }
+
+  if (relayState != relayStatePrevious){
+    if (millis() > relaySchedule)
+    {
+      {
+        relayStatePrevious = relayState;
+        setRelay(relayState);
+      }
+    }
+  }
 
   if (direction2 != direction2Previous)
   {
@@ -467,7 +496,7 @@ void reportDutyCycle(int dutyCycle)
 void setup()
 {
   pinMode(relayPin, OUTPUT);
-  digitalWrite(relayPin, HIGH);
+  relayState = true;
 
   Serial.begin(115200);
 
