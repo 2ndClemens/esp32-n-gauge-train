@@ -44,7 +44,7 @@ volatile unsigned long DebounceTimer1 = millis();
 volatile unsigned long DebounceTimer2 = millis();
 volatile unsigned long DebounceTimer3 = millis();
 volatile unsigned long DebounceTimer4 = millis();
-volatile unsigned int delayTime = 100;
+volatile unsigned int delayTime = 1000;
 
 uint32_t hallSensed1 = 0;
 uint32_t hallSensed2 = 0;
@@ -150,6 +150,25 @@ void reportDirection2(bool dir2)
   else
   {
     display.println("bw");
+  }
+
+  // Display static text
+
+  display.display();
+}
+
+void reportTrainCount(bool hasTwoTrains)
+{
+  twoTrains = hasTwoTrains;
+  display.fillRect(64, 40, 128, 10, BLACK);
+  display.setCursor(64, 40);
+  if (hasTwoTrains)
+  {
+    display.println("2 trains");
+  }
+  else
+  {
+    display.println("1 train");
   }
   display.display();
 }
@@ -335,7 +354,7 @@ void IRAM_ATTR reportSensorRead4() // lower exit sensor
       if (direction1 == false) // train exiting
       {
         relayState = false; // two trains
-        relaySchedule = millis() +3000;
+        relaySchedule = millis() + 3000;
         // servoState3 = 0;             // lower exit switch prevent entry
         servoState2 = 0;  // upper exit switch to exiting
         servoState1 = 80; // activate inner circle
@@ -435,7 +454,8 @@ void reportDutyCycle(int dutyCycle)
     }
   }
 
-  if (relayState != relayStatePrevious){
+  if (relayState != relayStatePrevious)
+  {
     if (millis() > relaySchedule)
     {
       {
@@ -451,28 +471,28 @@ void reportDutyCycle(int dutyCycle)
     setDirection2(direction2);
   }
 
-  display.fillRect(0, 20, 128, 10, BLACK);
+  display.fillRect(0, 20, 64, 10, BLACK);
   display.setCursor(0, 20);
 
   // Display static text
   display.println(hallSensed1, DEC);
   display.display();
 
-  display.fillRect(0, 30, 128, 10, BLACK);
+  display.fillRect(0, 30, 64, 10, BLACK);
   display.setCursor(0, 30);
 
   // Display static text
   display.println(hallSensed2, DEC);
   display.display();
 
-  display.fillRect(0, 40, 128, 10, BLACK);
+  display.fillRect(0, 40, 64, 10, BLACK);
   display.setCursor(0, 40);
 
   // Display static text
   display.println(hallSensed3, DEC);
   display.display();
 
-  display.fillRect(0, 50, 128, 10, BLACK);
+  display.fillRect(0, 50, 64, 10, BLACK);
   display.setCursor(0, 50);
 
   // Display static text
@@ -587,8 +607,10 @@ void setup()
 
   direction1 = true;
 
-  dutyCycle1 = 235;
-  dutyCycle2 = 220;
+  dutyCycle1 = 255;
+  dutyCycle2 = 230;
+
+  reportTrainCount(true);
 
   My_timer = timerBegin(0, 80, true);
   timerAttachInterrupt(My_timer, &onTimer, true);
