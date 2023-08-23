@@ -97,8 +97,10 @@ const int freq = 30000;
 const int pwmChannel1 = 5;
 const int pwmChannel2 = 6;
 const int resolution = 8;
-int dutyCycle1 = 220;
-int dutyCycle2 = 250;
+int dutyCycle1 = 0;
+int dutyCycle2 = 0;
+int targetDutyCycle1 = 255;
+int targetDutyCycle2 = 230;
 
 bool direction1 = false;
 bool direction2 = false;
@@ -246,8 +248,10 @@ void IRAM_ATTR onTimer()
 
 void IRAM_ATTR reportSensorRead1() // inner circle sensor
 {
+
   if (millis() > DebounceTimer1 + delayTime)
   {
+    targetDutyCycle1 = 230;
     DebounceTimer1 = millis();
     hallSensed1 += 1;
 
@@ -261,26 +265,31 @@ void IRAM_ATTR reportSensorRead1() // inner circle sensor
     }
     servoState3 = 0;
     servoState2 = 80;
-  }
-  if (twoTrains)
-  {
-    if ((hallSensed1 % 4) == 0)
+
+    if (twoTrains)
     {
-      relayState = true; // Stop in inner circle
-      // relaySchedule = millis() +3000;
-      direction1Schedule = millis() + 3000;
-      direction1 = false;
+      if ((hallSensed1 % 4) == 0)
+      {
+        relayState = true; // Stop in inner circle
+        // relaySchedule = millis() +3000;
+        dutyCycle1 = 0;
+        targetDutyCycle1 = 0;
+        direction1Schedule = millis() + 3000;
+        direction1 = false;
+      }
     }
-  }
-  else
-  {
-    relayState = false;
+    else
+    {
+      relayState = false;
+    }
   }
 }
 void IRAM_ATTR reportSensorRead3() // tunnel sensor
 {
+
   if (millis() > DebounceTimer3 + delayTime)
   {
+    targetDutyCycle1 = 220;
     DebounceTimer3 = millis();
     hallSensed3 += 1;
     if (direction1)
@@ -301,20 +310,23 @@ void IRAM_ATTR reportSensorRead3() // tunnel sensor
       servoState2 = 80;
       servoState1 = 0;
     }
-  }
-  /*   if (!twoTrains)
+
+    /*   if (!twoTrains)
+      {
+        digitalWrite(relayPin, LOW);
+      } */
+    if (direction1 == true) // ccw
     {
-      digitalWrite(relayPin, LOW);
-    } */
-  if (direction1 == true) // ccw
-  {
-    relayState = false; // activate inner curve
+      relayState = false; // activate inner curve
+    }
   }
 }
 void IRAM_ATTR reportSensorRead2() // upper exit sensor
 {
+
   if (millis() > DebounceTimer2 + delayTime)
   {
+    targetDutyCycle1 = 255;
     DebounceTimer2 = millis();
     if (direction1 == false) // driving down cw
     {
@@ -344,8 +356,10 @@ void IRAM_ATTR reportSensorRead2() // upper exit sensor
 }
 void IRAM_ATTR reportSensorRead4() // lower exit sensor
 {
+
   if (millis() > DebounceTimer4 + delayTime)
   {
+    targetDutyCycle1 = 255;
     DebounceTimer4 = millis();
     hallSensed4 += 1;
 
@@ -354,6 +368,8 @@ void IRAM_ATTR reportSensorRead4() // lower exit sensor
       if (direction1 == false) // train exiting
       {
         relayState = false; // two trains
+        dutyCycle1 = 0;
+        targetDutyCycle1 = 0;
         relaySchedule = millis() + 3000;
         // servoState3 = 0;             // lower exit switch prevent entry
         servoState2 = 0;  // upper exit switch to exiting
@@ -447,10 +463,11 @@ void reportDutyCycle(int dutyCycle)
   {
     if (millis() > direction1Schedule)
     {
-      {
-        direction1Previous = direction1;
-        setDirection1(direction1);
-      }
+
+      direction1Previous = direction1;
+      setDirection1(direction1);
+      dutyCycle1 = 0;
+      targetDutyCycle1 = 255;
     }
   }
 
@@ -458,10 +475,9 @@ void reportDutyCycle(int dutyCycle)
   {
     if (millis() > relaySchedule)
     {
-      {
-        relayStatePrevious = relayState;
-        setRelay(relayState);
-      }
+      targetDutyCycle1 = 255;
+      relayStatePrevious = relayState;
+      setRelay(relayState);
     }
   }
 
@@ -469,6 +485,36 @@ void reportDutyCycle(int dutyCycle)
   {
     direction2Previous = direction2;
     setDirection2(direction2);
+    dutyCycle2 = 0;
+    targetDutyCycle2 = 255;
+  }
+
+  if (dutyCycle1 < targetDutyCycle1)
+  {
+    if (targetDutyCycle1 - dutyCycle1 > 50)
+    {
+      dutyCycle1 += 20;
+    }
+    dutyCycle1++;
+  }
+
+  if (dutyCycle1 > targetDutyCycle1)
+  {
+    dutyCycle1--;
+  }
+
+  if (dutyCycle2 < targetDutyCycle2)
+  {
+    if (targetDutyCycle2 - dutyCycle2 > 50)
+    {
+      dutyCycle2 += 20;
+    }
+    dutyCycle2++;
+  }
+
+  if (dutyCycle2 > targetDutyCycle2)
+  {
+    dutyCycle2--;
   }
 
   display.fillRect(0, 20, 64, 10, BLACK);
@@ -606,9 +652,6 @@ void setup()
   direction2 = true;
 
   direction1 = true;
-
-  dutyCycle1 = 255;
-  dutyCycle2 = 230;
 
   reportTrainCount(true);
 
