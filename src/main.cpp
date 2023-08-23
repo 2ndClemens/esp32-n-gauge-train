@@ -93,7 +93,7 @@ int relayPin = 26;
 bool twoTrains = true;
 
 // Setting PWM properties
-const int freq = 30000;
+const int freq = 1000;
 const int pwmChannel1 = 5;
 const int pwmChannel2 = 6;
 const int resolution = 8;
@@ -271,7 +271,7 @@ void IRAM_ATTR reportSensorRead1() // inner circle sensor
       if ((hallSensed1 % 4) == 0)
       {
         relayState = true; // Stop in inner circle
-        // relaySchedule = millis() +3000;
+        relaySchedule = millis() + 3000;
         dutyCycle1 = 0;
         targetDutyCycle1 = 0;
         direction1Schedule = millis() + 3000;
