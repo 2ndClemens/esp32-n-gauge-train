@@ -100,7 +100,7 @@ const int resolution = 8;
 int dutyCycle1 = 0;
 int dutyCycle2 = 0;
 int targetDutyCycle1 = 255;
-int targetDutyCycle2 = 230;
+int targetDutyCycle2 = 255;
 
 bool direction1 = false;
 bool direction2 = false;
@@ -231,6 +231,7 @@ void setDirection2(boolean dir)
 
 void IRAM_ATTR onTimer()
 {
+  // dutyCycle2 = 0;
   direction2 = !direction2;
   if (!direction2)
   {
@@ -487,6 +488,7 @@ void reportDutyCycle(int dutyCycle)
     setDirection2(direction2);
     dutyCycle2 = 0;
     targetDutyCycle2 = 255;
+    ledcWrite(pwmChannel2, dutyCycle2);
   }
 
   if (dutyCycle1 < targetDutyCycle1)
@@ -657,7 +659,7 @@ void setup()
 
   My_timer = timerBegin(0, 80, true);
   timerAttachInterrupt(My_timer, &onTimer, true);
-  timerAlarmWrite(My_timer, 8000000, true);
+  timerAlarmWrite(My_timer, 16000000, true);
   timerAlarmEnable(My_timer);
 }
 
