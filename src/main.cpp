@@ -36,6 +36,8 @@ Servo myservo1; // create servo object to control a servo
 Servo myservo2; // create servo object to control a servo
 Servo myservo3; // create servo object to control a servo
 Servo myservo4; // create servo object to control a servo
+Servo myservo5; // create servo object to control a servo
+Servo myservo6; // create servo object to control a servo
 // twelve servo objects can be created on most boards
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
@@ -64,16 +66,22 @@ int servoState1 = 0;  // double
 int servoState2 = 0;  // up out
 int servoState3 = 80; // down out
 int servoState4 = 0;
+int servoState5 = 0; // down out
+int servoState6 = 80; // down out
 
 int servoState1Previous = 80;
 int servoState2Previous = 80;
 int servoState3Previous = 0;
 int servoState4Previous = 80;
+int servoState5Previous = 80;
+int servoState6Previous = 0;
 
 int servo1Pin = 15;
 int servo2Pin = 2;
 int servo3Pin = 0;
 int servo4Pin = 4;
+int servo6Pin = 12;
+int servo5Pin = 26;
 // Motor A
 int motor1Pin1 = 18;
 int motor1Pin2 = 19;
@@ -88,14 +96,14 @@ int sensorPin2 = 27; // Digital-Pin
 int sensorPin3 = 33; // Digital-Pin
 int sensorPin4 = 32; // Digital-Pin
 
-int relayPin = 26;
+int relayPin = 14;
 
 bool twoTrains = true;
 
 // Setting PWM properties
 const int freq = 1000;
-const int pwmChannel1 = 5;
-const int pwmChannel2 = 6;
+const int pwmChannel1 = 6;
+const int pwmChannel2 = 7;
 const int resolution = 8;
 int dutyCycle1 = 0;
 int dutyCycle2 = 0;
@@ -240,10 +248,14 @@ void IRAM_ATTR onTimer()
   if ((direction2Cycles % 2) == 0)
   {
     servoState4 = 80;
+
+    servoState6 = 0;
   }
   else
   {
     servoState4 = 0;
+
+    servoState6 = 80;
   }
 }
 
@@ -334,6 +346,17 @@ void IRAM_ATTR reportSensorRead2() // upper exit sensor
       servoState1 = 0;  // activate outer circle
       servoState2 = 0;  // upper exit switch to entering
       servoState3 = 80; // lower exit switch allow exit
+    }
+    else
+    {
+      if ((hallSensed2 % 4) == 0)
+      {
+        servoState5 = 0;
+      }
+      else
+      {
+        servoState5 = 80;
+      }
     }
     relayState = true; // activate lower entry
 
@@ -458,6 +481,20 @@ void reportDutyCycle(int dutyCycle)
     servoState4Previous = servoState4;
     // delay(250);
     myservo4.write(servoState4);
+  }
+
+  if (servoState5 != servoState5Previous)
+  {
+    servoState5Previous = servoState5;
+    // delay(250);
+    myservo5.write(servoState5);
+  }
+
+  if (servoState6 != servoState6Previous)
+  {
+    servoState6Previous = servoState6;
+    // delay(250);
+    myservo6.write(servoState6);
   }
 
   if (direction1 != direction1Previous)
@@ -631,10 +668,6 @@ void setup()
   attachInterrupt(sensorPin3, reportSensorRead3, RISING);
   attachInterrupt(sensorPin4, reportSensorRead4, RISING);
 
-  myservo1.attach(servo1Pin);
-  myservo2.attach(servo2Pin);
-  myservo3.attach(servo3Pin);
-  myservo4.attach(servo4Pin);
   // sets the pins as outputs:
   pinMode(motor1Pin1, OUTPUT);
   pinMode(motor1Pin2, OUTPUT);
@@ -661,6 +694,13 @@ void setup()
   timerAttachInterrupt(My_timer, &onTimer, true);
   timerAlarmWrite(My_timer, 16000000, true);
   timerAlarmEnable(My_timer);
+
+  myservo1.attach(servo1Pin);
+  myservo2.attach(servo2Pin);
+  myservo3.attach(servo3Pin);
+  myservo4.attach(servo4Pin);
+  myservo5.attach(servo5Pin);
+  myservo6.attach(servo6Pin);
 }
 
 void loop()
