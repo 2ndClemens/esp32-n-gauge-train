@@ -46,12 +46,16 @@ volatile unsigned long DebounceTimer1 = millis();
 volatile unsigned long DebounceTimer2 = millis();
 volatile unsigned long DebounceTimer3 = millis();
 volatile unsigned long DebounceTimer4 = millis();
+volatile unsigned long DebounceTimer5 = millis();
+volatile unsigned long DebounceTimer6 = millis();
 volatile unsigned int delayTime = 1000;
 
 uint32_t hallSensed1 = 0;
 uint32_t hallSensed2 = 0;
 uint32_t hallSensed3 = 0;
 uint32_t hallSensed4 = 0;
+uint32_t hallSensed5 = 0;
+uint32_t hallSensed6 = 0;
 
 uint32_t direction2Cycles = 0;
 
@@ -66,7 +70,7 @@ int servoState1 = 0;  // double
 int servoState2 = 0;  // up out
 int servoState3 = 80; // down out
 int servoState4 = 0;
-int servoState5 = 0; // down out
+int servoState5 = 0;  // down out
 int servoState6 = 80; // down out
 
 int servoState1Previous = 80;
@@ -95,6 +99,8 @@ int sensorPin1 = 13; // Digital-Pin
 int sensorPin2 = 27; // Digital-Pin
 int sensorPin3 = 33; // Digital-Pin
 int sensorPin4 = 32; // Digital-Pin
+int sensorPin5 = 35; // Digital-Pin
+int sensorPin6 = 34; // Digital-Pin
 
 int relayPin = 14;
 
@@ -248,13 +254,17 @@ void IRAM_ATTR onTimer()
   if ((direction2Cycles % 2) == 0)
   {
     servoState4 = 80;
-
-    servoState6 = 0;
   }
   else
   {
     servoState4 = 0;
-
+  }
+  if ((direction2Cycles % 4) == 3)
+  {
+    servoState6 = 0;
+  }
+  else
+  {
     servoState6 = 80;
   }
 }
@@ -349,7 +359,7 @@ void IRAM_ATTR reportSensorRead2() // upper exit sensor
     }
     else
     {
-      if ((hallSensed2 % 4) == 0)
+      if ((hallSensed2 % 4) == 0 )
       {
         servoState5 = 0;
       }
@@ -424,6 +434,18 @@ void IRAM_ATTR reportSensorRead4() // lower exit sensor
       servoState4 = 0;
     } */
   }
+}
+
+void IRAM_ATTR reportSensorRead5() // lower exit sensor
+{
+  DebounceTimer5 = millis();
+  hallSensed5 += 1;
+}
+
+void IRAM_ATTR reportSensorRead6() // lower exit sensor
+{
+  DebounceTimer6 = millis();
+  hallSensed6 += 1;
 }
 
 class MyCallbacks : public BLECharacteristicCallbacks
@@ -584,6 +606,13 @@ void reportDutyCycle(int dutyCycle)
   display.println(hallSensed4, DEC);
   display.display();
 
+  display.fillRect(0, 60, 64, 10, BLACK);
+  display.setCursor(0, 60);
+
+  // Display static text
+  display.println(hallSensed5, DEC);
+  display.display();
+
   ledcWrite(pwmChannel1, dutyCycle1);
   ledcWrite(pwmChannel2, dutyCycle2);
   // Serial.print("Duty cycle: ");
@@ -663,10 +692,14 @@ void setup()
   pinMode(sensorPin2, INPUT_PULLUP);
   pinMode(sensorPin3, INPUT_PULLUP);
   pinMode(sensorPin4, INPUT_PULLUP);
+  pinMode(sensorPin5, INPUT_PULLUP);
+  pinMode(sensorPin6, INPUT_PULLUP);
   attachInterrupt(sensorPin1, reportSensorRead1, RISING);
   attachInterrupt(sensorPin2, reportSensorRead2, RISING);
   attachInterrupt(sensorPin3, reportSensorRead3, RISING);
   attachInterrupt(sensorPin4, reportSensorRead4, RISING);
+  attachInterrupt(sensorPin5, reportSensorRead5, RISING);
+  attachInterrupt(sensorPin6, reportSensorRead6, RISING);
 
   // sets the pins as outputs:
   pinMode(motor1Pin1, OUTPUT);
