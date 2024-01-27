@@ -70,14 +70,14 @@ int servoState1 = 0;  // double
 int servoState2 = 0;  // up out
 int servoState3 = 80; // down out
 int servoState4 = 0;
-int servoState5 = 0;  // down out
-int servoState6 = 80; // down out
+int servoState5 = 80; // up cross
+int servoState6 = 80; // down cross
 
 int servoState1Previous = 80;
 int servoState2Previous = 80;
 int servoState3Previous = 0;
 int servoState4Previous = 80;
-int servoState5Previous = 80;
+int servoState5Previous = 0;
 int servoState6Previous = 0;
 
 int servo1Pin = 15;
@@ -351,6 +351,28 @@ void IRAM_ATTR reportSensorRead2() // upper exit sensor
   {
     targetDutyCycle1 = 255;
     DebounceTimer2 = millis();
+
+    if ((hallSensed2 % 4) == 0)
+    {
+      direction1Schedule = millis() + 17000;
+      direction1 = true;
+    }
+
+    if ((hallSensed2 % 4) == 1)
+    {
+      direction1Schedule = millis() + 2000;
+      direction1 = false;
+    }
+
+    if ((hallSensed2 % 4) == 3 || (hallSensed2 % 4) == 0)
+    {
+      servoState5 = 80;
+    }
+    else
+    {
+      servoState5 = 0;
+    }
+
     if (direction1 == false) // driving down cw
     {
       servoState1 = 0;  // activate outer circle
@@ -359,14 +381,6 @@ void IRAM_ATTR reportSensorRead2() // upper exit sensor
     }
     else
     {
-      if ((hallSensed2 % 4) == 0 )
-      {
-        servoState5 = 0;
-      }
-      else
-      {
-        servoState5 = 80;
-      }
     }
     relayState = true; // activate lower entry
 
@@ -525,8 +539,10 @@ void reportDutyCycle(int dutyCycle)
     {
 
       direction1Previous = direction1;
-      setDirection1(direction1);
       dutyCycle1 = 0;
+      ledcWrite(pwmChannel1, dutyCycle1);
+      setDirection1(direction1);
+      
       targetDutyCycle1 = 255;
     }
   }
