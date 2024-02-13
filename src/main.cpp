@@ -247,11 +247,9 @@ void IRAM_ATTR onTimer()
 {
   // dutyCycle2 = 0;
   direction2 = !direction2;
-  if (!direction2)
-  {
-    direction2Cycles += 1;
-  }
-  if ((direction2Cycles % 2) == 0)
+  direction2Cycles += 1;
+
+  if ((direction2Cycles % 6) ==1 || (direction2Cycles % 6) ==2)
   {
     servoState4 = 80;
   }
@@ -259,7 +257,7 @@ void IRAM_ATTR onTimer()
   {
     servoState4 = 0;
   }
-  if ((direction2Cycles % 4) == 3)
+  if ((direction2Cycles % 6) == 3 ||(direction2Cycles % 6) == 5)
   {
     servoState6 = 0;
   }
@@ -560,10 +558,12 @@ void reportDutyCycle(int dutyCycle)
   if (direction2 != direction2Previous)
   {
     direction2Previous = direction2;
-    setDirection2(direction2);
+    
     dutyCycle2 = 0;
-    targetDutyCycle2 = 255;
     ledcWrite(pwmChannel2, dutyCycle2);
+    setDirection2(direction2);
+    targetDutyCycle2 = 255;
+    
   }
 
   if (dutyCycle1 < targetDutyCycle1)
