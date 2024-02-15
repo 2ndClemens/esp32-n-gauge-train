@@ -6,15 +6,18 @@
 #include <BLE2902.h>
 
 #include <Adafruit_SSD1306.h>
+#include <Adafruit_PWMServoDriver.h>
 #include <Servo.h>
 
 #include <Adafruit_NeoPixel.h>
+
 
 #define PIN 25
 
 // When we setup the NeoPixel library, we tell it how many pixels, and which pin to use to send signals.
 // Note that for older NeoPixel strips you might need to change the third parameter--see the strandtest
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(3, PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -28,6 +31,8 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(3, PIN, NEO_GRB + NEO_KHZ800);
 
 #define CHARACTERISTIC_UUID_SENSOR_1_TX "6E400004-B5A3-F393-E0A9-E50E24DCCA9E"
 #define CHARACTERISTIC_UUID_DIRECTION_TX "6E400005-B5A3-F393-E0A9-E50E24DCCA9E"
+
+#define SERVO_FREQ 50 // Analog servos run at ~50 Hz updates
 
 BLECharacteristic *pTxCharacteristicSensor1;
 BLECharacteristic *pTxCharacteristicDirection;
@@ -102,7 +107,7 @@ int sensorPin4 = 32; // Digital-Pin
 int sensorPin5 = 35; // Digital-Pin
 int sensorPin6 = 34; // Digital-Pin
 
-int relayPin = 14;
+//int relayPin = 14;
 
 bool twoTrains = true;
 
@@ -193,11 +198,15 @@ void setRelay(boolean state)
 {
   if (state == true)
   {
-    digitalWrite(relayPin, HIGH);
+    // digitalWrite(relayPin, HIGH);
+pwm.setPWM(8, 0, 4096);       // turns pin fully off
+     
   }
   else
   {
-    digitalWrite(relayPin, LOW);
+    // digitalWrite(relayPin, LOW);
+pwm.setPWM(8, 4096, 0);       // turns pin fully on
+    
   }
 }
 
@@ -494,6 +503,7 @@ void reportDutyCycle(int dutyCycle)
   {
     servoState1Previous = servoState1;
     myservo1.write(servoState1);
+    pwm.setPWM(1, 0, servoState1*2.3+120);
   }
 
   if (servoState2 != servoState2Previous)
@@ -501,6 +511,7 @@ void reportDutyCycle(int dutyCycle)
     servoState2Previous = servoState2;
     // delay(250);
     myservo2.write(servoState2);
+    pwm.setPWM(2, 0, servoState2*2.3+120);
   }
 
   if (servoState3 != servoState3Previous)
@@ -508,6 +519,7 @@ void reportDutyCycle(int dutyCycle)
     servoState3Previous = servoState3;
     // delay(250);
     myservo3.write(servoState3);
+    pwm.setPWM(3, 0, servoState3*2.3+120);
   }
 
   if (servoState4 != servoState4Previous)
@@ -515,13 +527,15 @@ void reportDutyCycle(int dutyCycle)
     servoState4Previous = servoState4;
     // delay(250);
     myservo4.write(servoState4);
+    pwm.setPWM(4, 0, servoState4*2.3+120);
   }
 
   if (servoState5 != servoState5Previous)
   {
     servoState5Previous = servoState5;
     // delay(250);
-    myservo5.write(servoState5);
+    // myservo5.write(servoState5);
+    pwm.setPWM(5, 0, servoState5*2.3+120);
   }
 
   if (servoState6 != servoState6Previous)
@@ -529,6 +543,7 @@ void reportDutyCycle(int dutyCycle)
     servoState6Previous = servoState6;
     // delay(250);
     myservo6.write(servoState6);
+    pwm.setPWM(6, 0, servoState6*2.3+120);
   }
 
   if (direction1 != direction1Previous)
@@ -645,7 +660,7 @@ void reportDutyCycle(int dutyCycle)
 
 void setup()
 {
-  pinMode(relayPin, OUTPUT);
+  // pinMode(relayPin, OUTPUT);
   relayState = true;
 
   Serial.begin(115200);
@@ -750,6 +765,10 @@ void setup()
   myservo4.attach(servo4Pin);
   myservo5.attach(servo5Pin);
   myservo6.attach(servo6Pin);
+
+   pwm.begin();
+   pwm.setOscillatorFrequency(27000000);
+  pwm.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
 }
 
 void loop()
