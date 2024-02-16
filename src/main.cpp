@@ -457,13 +457,13 @@ void IRAM_ATTR reportSensorRead4() // lower exit sensor
   }
 }
 
-void IRAM_ATTR reportSensorRead5() // lower exit sensor
+void IRAM_ATTR reportSensorRead5() // upper wait position sensor
 {
   DebounceTimer5 = millis();
   hallSensed5 += 1;
 }
 
-void IRAM_ATTR reportSensorRead6() // lower exit sensor
+void IRAM_ATTR reportSensorRead6() // discharge area
 {
   DebounceTimer6 = millis();
   hallSensed6 += 1;
@@ -614,35 +614,36 @@ void reportDutyCycle(int dutyCycle)
 
   // Display static text
   display.println(hallSensed1, DEC);
-  display.display();
 
   display.fillRect(0, 30, 64, 10, BLACK);
   display.setCursor(0, 30);
 
   // Display static text
   display.println(hallSensed2, DEC);
-  display.display();
 
   display.fillRect(0, 40, 64, 10, BLACK);
   display.setCursor(0, 40);
 
   // Display static text
   display.println(hallSensed3, DEC);
-  display.display();
 
   display.fillRect(0, 50, 64, 10, BLACK);
   display.setCursor(0, 50);
 
   // Display static text
   display.println(hallSensed4, DEC);
-  display.display();
 
-  display.fillRect(0, 60, 64, 10, BLACK);
-  display.setCursor(0, 60);
+  //display.fillRect(15, 30, 64, 10, BLACK);
+  display.setCursor(28, 20);
 
   // Display static text
   display.println(hallSensed5, DEC);
-  display.display();
+
+  // display.fillRect(15, 40, 64, 10, BLACK);
+  display.setCursor(28, 30);
+
+  // Display static text
+  display.println(hallSensed6, DEC);
 
   ledcWrite(pwmChannel1, dutyCycle1);
   ledcWrite(pwmChannel2, dutyCycle2);
