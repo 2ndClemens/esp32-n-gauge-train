@@ -11,7 +11,6 @@
 
 #include <Adafruit_NeoPixel.h>
 
-
 #define PIN 25
 
 // When we setup the NeoPixel library, we tell it how many pixels, and which pin to use to send signals.
@@ -107,7 +106,7 @@ int sensorPin4 = 32; // Digital-Pin
 int sensorPin5 = 35; // Digital-Pin
 int sensorPin6 = 34; // Digital-Pin
 
-//int relayPin = 14;
+// int relayPin = 14;
 
 bool twoTrains = true;
 
@@ -199,14 +198,12 @@ void setRelay(boolean state)
   if (state == true)
   {
     // digitalWrite(relayPin, HIGH);
-pwm.setPWM(8, 0, 4096);       // turns pin fully off
-     
+    pwm.setPWM(8, 0, 4096); // turns pin fully off
   }
   else
   {
     // digitalWrite(relayPin, LOW);
-pwm.setPWM(8, 4096, 0);       // turns pin fully on
-    
+    pwm.setPWM(8, 4096, 0); // turns pin fully on
   }
 }
 
@@ -258,7 +255,7 @@ void IRAM_ATTR onTimer()
   direction2 = !direction2;
   direction2Cycles += 1;
 
-  if ((direction2Cycles % 6) ==1 || (direction2Cycles % 6) ==2)
+  if ((direction2Cycles % 6) == 1 || (direction2Cycles % 6) == 2)
   {
     servoState4 = 80;
   }
@@ -266,7 +263,7 @@ void IRAM_ATTR onTimer()
   {
     servoState4 = 0;
   }
-  if ((direction2Cycles % 6) == 3 ||(direction2Cycles % 6) == 5)
+  if ((direction2Cycles % 6) == 3 || (direction2Cycles % 6) == 5)
   {
     servoState6 = 0;
   }
@@ -359,26 +356,26 @@ void IRAM_ATTR reportSensorRead2() // upper exit sensor
     targetDutyCycle1 = 255;
     DebounceTimer2 = millis();
 
-    if ((hallSensed2 % 4) == 0)
+    if ((hallSensed2 % 2) == 0)
     {
-      direction1Schedule = millis() + 17000;
-      direction1 = true;
+      // direction1Schedule = millis() + 17000;
+      // direction1 = true;
     }
 
-    if ((hallSensed2 % 4) == 1)
+    /* if ((hallSensed2 % 2) == 1)
     {
       direction1Schedule = millis() + 2000;
       direction1 = false;
-    }
-
-    if ((hallSensed2 % 4) == 3 || (hallSensed2 % 4) == 0)
-    {
-      servoState5 = 80;
-    }
-    else
-    {
-      servoState5 = 0;
-    }
+    } */
+    servoState5 = 80;
+    /*     if ((hallSensed2 % 4) == 3 || (hallSensed2 % 4) == 0)
+        {
+          servoState5 = 80;
+        }
+        else
+        {
+          servoState5 = 0;
+        } */
 
     if (direction1 == false) // driving down cw
     {
@@ -399,6 +396,7 @@ void IRAM_ATTR reportSensorRead2() // upper exit sensor
     else
     {
       direction1Schedule = millis() + 3000;
+      // servoState5 = 0;
       direction1 = false;
     }
     /* if (twoTrains)
@@ -427,8 +425,10 @@ void IRAM_ATTR reportSensorRead4() // lower exit sensor
         targetDutyCycle1 = 0;
         relaySchedule = millis() + 3000;
         // servoState3 = 0;             // lower exit switch prevent entry
+
         servoState2 = 0;  // upper exit switch to exiting
         servoState1 = 80; // activate inner circle
+        servoState5 = 0;  // upper cross reset
       }
       else // train entering
       {
@@ -459,14 +459,33 @@ void IRAM_ATTR reportSensorRead4() // lower exit sensor
 
 void IRAM_ATTR reportSensorRead5() // upper wait position sensor
 {
-  DebounceTimer5 = millis();
-  hallSensed5 += 1;
+  if (millis() > DebounceTimer5 + delayTime)
+  {
+    DebounceTimer5 = millis();
+    servoState5 = 80;
+    hallSensed5 += 1;
+    if (direction1 == true) // train exiting
+    {
+      direction1Schedule = millis() + 3000;
+      direction1 = false;
+    }
+  }
 }
 
 void IRAM_ATTR reportSensorRead6() // discharge area
 {
-  DebounceTimer6 = millis();
-  hallSensed6 += 1;
+  if (millis() > DebounceTimer6 + delayTime)
+
+  {
+    DebounceTimer6 = millis();
+    servoState5 = 0;
+    hallSensed6 += 1;
+    if (direction1 == false) // train exiting
+    {
+      direction1Schedule = millis() + 3000;
+      direction1 = true;
+    }
+  }
 }
 
 class MyCallbacks : public BLECharacteristicCallbacks
@@ -503,7 +522,7 @@ void reportDutyCycle(int dutyCycle)
   {
     servoState1Previous = servoState1;
     myservo1.write(servoState1);
-    pwm.setPWM(1, 0, servoState1*2.3+120);
+    pwm.setPWM(1, 0, servoState1 * 2.3 + 120);
   }
 
   if (servoState2 != servoState2Previous)
@@ -511,7 +530,7 @@ void reportDutyCycle(int dutyCycle)
     servoState2Previous = servoState2;
     // delay(250);
     myservo2.write(servoState2);
-    pwm.setPWM(2, 0, servoState2*2.3+120);
+    pwm.setPWM(2, 0, servoState2 * 2.3 + 120);
   }
 
   if (servoState3 != servoState3Previous)
@@ -519,7 +538,7 @@ void reportDutyCycle(int dutyCycle)
     servoState3Previous = servoState3;
     // delay(250);
     myservo3.write(servoState3);
-    pwm.setPWM(3, 0, servoState3*2.3+120);
+    pwm.setPWM(3, 0, servoState3 * 2.3 + 120);
   }
 
   if (servoState4 != servoState4Previous)
@@ -527,7 +546,7 @@ void reportDutyCycle(int dutyCycle)
     servoState4Previous = servoState4;
     // delay(250);
     myservo4.write(servoState4);
-    pwm.setPWM(4, 0, servoState4*2.3+120);
+    pwm.setPWM(4, 0, servoState4 * 2.3 + 120);
   }
 
   if (servoState5 != servoState5Previous)
@@ -535,7 +554,7 @@ void reportDutyCycle(int dutyCycle)
     servoState5Previous = servoState5;
     // delay(250);
     // myservo5.write(servoState5);
-    pwm.setPWM(5, 0, servoState5*2.3+120);
+    pwm.setPWM(5, 0, servoState5 * 2.3 + 120);
   }
 
   if (servoState6 != servoState6Previous)
@@ -543,7 +562,7 @@ void reportDutyCycle(int dutyCycle)
     servoState6Previous = servoState6;
     // delay(250);
     myservo6.write(servoState6);
-    pwm.setPWM(6, 0, servoState6*2.3+120);
+    pwm.setPWM(6, 0, servoState6 * 2.3 + 120);
   }
 
   if (direction1 != direction1Previous)
@@ -555,7 +574,7 @@ void reportDutyCycle(int dutyCycle)
       dutyCycle1 = 0;
       ledcWrite(pwmChannel1, dutyCycle1);
       setDirection1(direction1);
-      
+
       targetDutyCycle1 = 255;
     }
   }
@@ -573,12 +592,11 @@ void reportDutyCycle(int dutyCycle)
   if (direction2 != direction2Previous)
   {
     direction2Previous = direction2;
-    
+
     dutyCycle2 = 0;
     ledcWrite(pwmChannel2, dutyCycle2);
     setDirection2(direction2);
     targetDutyCycle2 = 255;
-    
   }
 
   if (dutyCycle1 < targetDutyCycle1)
@@ -633,7 +651,7 @@ void reportDutyCycle(int dutyCycle)
   // Display static text
   display.println(hallSensed4, DEC);
 
-  //display.fillRect(15, 30, 64, 10, BLACK);
+  // display.fillRect(15, 30, 64, 10, BLACK);
   display.setCursor(28, 20);
 
   // Display static text
@@ -767,9 +785,9 @@ void setup()
   myservo5.attach(servo5Pin);
   myservo6.attach(servo6Pin);
 
-   pwm.begin();
-   pwm.setOscillatorFrequency(27000000);
-  pwm.setPWMFreq(SERVO_FREQ);  // Analog servos run at ~50 Hz updates
+  pwm.begin();
+  pwm.setOscillatorFrequency(27000000);
+  pwm.setPWMFreq(SERVO_FREQ); // Analog servos run at ~50 Hz updates
 }
 
 void loop()
