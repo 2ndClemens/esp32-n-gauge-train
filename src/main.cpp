@@ -421,8 +421,8 @@ void IRAM_ATTR reportSensorRead4() // lower exit sensor
       if (direction1 == false) // train exiting
       {
         relayState = false; // two trains
-        dutyCycle1 = 0;
-        targetDutyCycle1 = 0;
+        // dutyCycle1 = 0;
+        // targetDutyCycle1 = 0;
         relaySchedule = millis() + 3000;
         // servoState3 = 0;             // lower exit switch prevent entry
 
