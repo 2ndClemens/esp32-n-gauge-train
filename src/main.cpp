@@ -53,6 +53,7 @@ volatile unsigned long DebounceTimer4 = millis();
 volatile unsigned long DebounceTimer5 = millis();
 volatile unsigned long DebounceTimer6 = millis();
 volatile unsigned int delayTime = 1000;
+volatile unsigned direction2Modulo = 0;
 
 uint32_t hallSensed1 = 0;
 uint32_t hallSensed2 = 0;
@@ -124,10 +125,13 @@ bool direction1 = false;
 bool direction2 = false;
 bool direction1Previous = false;
 bool direction2Previous = false;
-bool relayState = false;
-bool relayStatePrevious = false;
+bool relayState1 = false;
+bool relayState2 = false;
+bool relayState1Previous = false;
+bool relayState2Previous = false;
 volatile unsigned long direction1Schedule = millis();
-volatile unsigned long relaySchedule = millis();
+volatile unsigned long relay1Schedule = millis();
+volatile unsigned long relay2Schedule = millis();
 
 void reportDirection1(bool dir1)
 {
@@ -193,7 +197,7 @@ void reportTrainCount(bool hasTwoTrains)
   display.display();
 }
 
-void setRelay(boolean state)
+void setRelay1(boolean state)
 {
   if (state == true)
   {
@@ -204,6 +208,19 @@ void setRelay(boolean state)
   {
     // digitalWrite(relayPin, LOW);
     pwm.setPWM(8, 4096, 0); // turns pin fully on
+  }
+}
+void setRelay2(boolean state)
+{
+  if (state == true)
+  {
+    // digitalWrite(relayPin, HIGH);
+    pwm.setPWM(9, 0, 4096); // turns pin fully off
+  }
+  else
+  {
+    // digitalWrite(relayPin, LOW);
+    pwm.setPWM(9, 4096, 0); // turns pin fully on
   }
 }
 
@@ -252,10 +269,32 @@ void setDirection2(boolean dir)
 void IRAM_ATTR onTimer()
 {
   // dutyCycle2 = 0;
-  direction2 = !direction2;
   direction2Cycles += 1;
 
-  if ((direction2Cycles % 6) == 1 || (direction2Cycles % 6) == 2)
+  direction2Modulo = (direction2Cycles % 5);
+
+
+  if (direction2Modulo != 1 )
+  {
+  direction2 = !direction2;
+  }else{
+    dutyCycle2 = 0;
+  }
+  
+  
+
+   if (direction2Modulo == 0 || direction2Modulo == 2)
+  {
+    relayState2 = true;
+    relayState2Previous = false;
+  }
+  else
+  {
+    relayState2 = false;
+    relayState2Previous = true;
+  }
+
+  if (direction2Modulo == 1 || direction2Modulo == 2 || direction2Modulo == 3)
   {
     servoState4 = 80;
   }
@@ -263,13 +302,15 @@ void IRAM_ATTR onTimer()
   {
     servoState4 = 0;
   }
-  if ((direction2Cycles % 6) == 3 || (direction2Cycles % 6) == 5)
+  if (direction2Modulo == 2 || direction2Modulo == 3 || direction2Modulo == 4)
   {
     servoState6 = 0;
+    
   }
   else
   {
     servoState6 = 80;
+    
   }
 }
 
@@ -297,8 +338,8 @@ void IRAM_ATTR reportSensorRead1() // inner circle sensor
     {
       if ((hallSensed1 % 4) == 0)
       {
-        relayState = true; // Stop in inner circle
-        relaySchedule = millis() + 3000;
+        relayState1 = true; // Stop in inner circle
+        relay1Schedule = millis() + 3000;
         dutyCycle1 = 0;
         targetDutyCycle1 = 0;
         direction1Schedule = millis() + 3000;
@@ -307,7 +348,7 @@ void IRAM_ATTR reportSensorRead1() // inner circle sensor
     }
     else
     {
-      relayState = false;
+      relayState1 = false;
     }
   }
 }
@@ -344,7 +385,7 @@ void IRAM_ATTR reportSensorRead3() // tunnel sensor
       } */
     if (direction1 == true) // ccw
     {
-      relayState = false; // activate inner curve
+      relayState1 = false; // activate inner curve
     }
   }
 }
@@ -386,7 +427,7 @@ void IRAM_ATTR reportSensorRead2() // upper exit sensor
     else
     {
     }
-    relayState = true; // activate lower entry
+    relayState1 = true; // activate lower entry
 
     hallSensed2 += 1;
     if (twoTrains)
@@ -420,10 +461,10 @@ void IRAM_ATTR reportSensorRead4() // lower exit sensor
     {
       if (direction1 == false) // train exiting
       {
-        relayState = false; // two trains
+        relayState1 = false; // two trains
         // dutyCycle1 = 0;
         // targetDutyCycle1 = 0;
-        relaySchedule = millis() + 3000;
+        relay1Schedule = millis() + 3000;
         // servoState3 = 0;             // lower exit switch prevent entry
 
         servoState2 = 0;  // upper exit switch to exiting
@@ -439,7 +480,7 @@ void IRAM_ATTR reportSensorRead4() // lower exit sensor
     }
     else
     {
-      relayState = true; // activate lower entry
+      relayState1 = true; // activate lower entry
     }
 
     direction1Schedule = millis() + 3000;
@@ -579,13 +620,23 @@ void reportDutyCycle(int dutyCycle)
     }
   }
 
-  if (relayState != relayStatePrevious)
+  if (relayState1 != relayState1Previous)
   {
-    if (millis() > relaySchedule)
+    if (millis() > relay1Schedule)
     {
-      targetDutyCycle1 = 255;
-      relayStatePrevious = relayState;
-      setRelay(relayState);
+      // targetDutyCycle1 = 255;
+      relayState1Previous = relayState1;
+      setRelay1(relayState1);
+    }
+  }
+
+  if (relayState2 != relayState2Previous)
+  {
+    if (millis() > relay2Schedule)
+    {
+      // targetDutyCycle1 = 255;
+      relayState2Previous = relayState2;
+      setRelay2(relayState2);
     }
   }
 
@@ -680,7 +731,7 @@ void reportDutyCycle(int dutyCycle)
 void setup()
 {
   // pinMode(relayPin, OUTPUT);
-  relayState = true;
+  relayState1 = true;
 
   Serial.begin(115200);
 
