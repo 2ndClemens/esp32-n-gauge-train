@@ -273,17 +273,16 @@ void IRAM_ATTR onTimer()
 
   direction2Modulo = (direction2Cycles % 5);
 
-
-  if (direction2Modulo != 1 )
+  if (direction2Modulo != 1)
   {
-  direction2 = !direction2;
-  }else{
+    direction2 = !direction2;
+  }
+  else
+  {
     dutyCycle2 = 0;
   }
-  
-  
 
-   if (direction2Modulo == 0 || direction2Modulo == 2)
+  if (direction2Modulo == 0 || direction2Modulo == 2)
   {
     relayState2 = true;
     relayState2Previous = false;
@@ -305,12 +304,10 @@ void IRAM_ATTR onTimer()
   if (direction2Modulo == 2 || direction2Modulo == 3 || direction2Modulo == 4)
   {
     servoState6 = 0;
-    
   }
   else
   {
     servoState6 = 80;
-    
   }
 }
 
