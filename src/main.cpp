@@ -7,7 +7,6 @@
 
 #include <Adafruit_SSD1306.h>
 #include <Adafruit_PWMServoDriver.h>
-#include <Servo.h>
 
 #include <Adafruit_NeoPixel.h>
 
@@ -35,14 +34,6 @@ Adafruit_PWMServoDriver pwm = Adafruit_PWMServoDriver();
 
 BLECharacteristic *pTxCharacteristicSensor1;
 BLECharacteristic *pTxCharacteristicDirection;
-
-Servo myservo1; // create servo object to control a servo
-Servo myservo2; // create servo object to control a servo
-Servo myservo3; // create servo object to control a servo
-Servo myservo4; // create servo object to control a servo
-Servo myservo5; // create servo object to control a servo
-Servo myservo6; // create servo object to control a servo
-// twelve servo objects can be created on most boards
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
@@ -85,12 +76,6 @@ int servoState4Previous = 80;
 int servoState5Previous = 0;
 int servoState6Previous = 0;
 
-int servo1Pin = 15;
-int servo2Pin = 2;
-int servo3Pin = 0;
-int servo4Pin = 4;
-int servo6Pin = 12;
-int servo5Pin = 26;
 // Motor A
 int motor1Pin1 = 18;
 int motor1Pin2 = 19;
@@ -316,7 +301,7 @@ void IRAM_ATTR reportSensorRead1() // inner circle sensor
 
   if (millis() > DebounceTimer1 + delayTime)
   {
-    targetDutyCycle1 = 230;
+    targetDutyCycle1 = 255;
     DebounceTimer1 = millis();
     hallSensed1 += 1;
 
@@ -354,7 +339,14 @@ void IRAM_ATTR reportSensorRead3() // tunnel sensor
 
   if (millis() > DebounceTimer3 + delayTime)
   {
-    targetDutyCycle1 = 220;
+    if (direction1 = false)
+    {
+      targetDutyCycle1 = 255;
+    }
+    else
+    {
+      targetDutyCycle1 = 220;
+    }
     DebounceTimer3 = millis();
     hallSensed3 += 1;
     if (direction1)
@@ -559,47 +551,36 @@ void reportDutyCycle(int dutyCycle)
   if (servoState1 != servoState1Previous)
   {
     servoState1Previous = servoState1;
-    myservo1.write(servoState1);
     pwm.setPWM(1, 0, servoState1 * 2.3 + 120);
   }
 
   if (servoState2 != servoState2Previous)
   {
     servoState2Previous = servoState2;
-    // delay(250);
-    myservo2.write(servoState2);
     pwm.setPWM(2, 0, servoState2 * 2.3 + 120);
   }
 
   if (servoState3 != servoState3Previous)
   {
     servoState3Previous = servoState3;
-    // delay(250);
-    myservo3.write(servoState3);
     pwm.setPWM(3, 0, servoState3 * 2.3 + 120);
   }
 
   if (servoState4 != servoState4Previous)
   {
     servoState4Previous = servoState4;
-    // delay(250);
-    myservo4.write(servoState4);
     pwm.setPWM(4, 0, servoState4 * 2.3 + 120);
   }
 
   if (servoState5 != servoState5Previous)
   {
     servoState5Previous = servoState5;
-    // delay(250);
-    // myservo5.write(servoState5);
     pwm.setPWM(5, 0, servoState5 * 2.3 + 120);
   }
 
   if (servoState6 != servoState6Previous)
   {
     servoState6Previous = servoState6;
-    // delay(250);
-    myservo6.write(servoState6);
     pwm.setPWM(6, 0, servoState6 * 2.3 + 120);
   }
 
@@ -825,13 +806,6 @@ void setup()
   timerAttachInterrupt(My_timer, &onTimer, true);
   timerAlarmWrite(My_timer, 16000000, true);
   timerAlarmEnable(My_timer);
-
-  myservo1.attach(servo1Pin);
-  myservo2.attach(servo2Pin);
-  myservo3.attach(servo3Pin);
-  myservo4.attach(servo4Pin);
-  myservo5.attach(servo5Pin);
-  myservo6.attach(servo6Pin);
 
   pwm.begin();
   pwm.setOscillatorFrequency(27000000);
