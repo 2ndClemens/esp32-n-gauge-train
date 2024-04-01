@@ -339,13 +339,13 @@ void IRAM_ATTR reportSensorRead3() // tunnel sensor
 
   if (millis() > DebounceTimer3 + delayTime)
   {
-    if (direction1 = false)
+    if (direction1 == false)
     {
-      targetDutyCycle1 = 255;
+      targetDutyCycle1 = 220;
     }
     else
     {
-      targetDutyCycle1 = 220;
+      targetDutyCycle1 = 255;
     }
     DebounceTimer3 = millis();
     hallSensed3 += 1;
