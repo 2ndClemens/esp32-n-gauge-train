@@ -92,6 +92,19 @@ int sensorPin4 = 32; // Digital-Pin
 int sensorPin5 = 35; // Digital-Pin
 int sensorPin6 = 34; // Digital-Pin
 
+int pwmServoDriverServoPin1 = 1;
+int pwmServoDriverServoPin2 = 2;
+int pwmServoDriverServoPin3 = 3;
+int pwmServoDriverServoPin4 = 4;
+int pwmServoDriverServoPin5 = 5;
+int pwmServoDriverServoPin6 = 6;
+
+int pwmServoDriverRelayPin1 = 8;
+int pwmServoDriverRelayPin2 = 9;
+
+int pwmServoDriverMotorEnablePin1 = 12;
+int pwmServoDriverMotorDirectionPin1 = 13;
+
 // int relayPin = 14;
 
 bool twoTrains = true;
@@ -187,12 +200,12 @@ void setRelay1(boolean state)
   if (state == true)
   {
     // digitalWrite(relayPin, HIGH);
-    pwm.setPWM(8, 0, 4096); // turns pin fully off
+    pwm.setPWM(pwmServoDriverRelayPin1, 0, 4096); // turns pin fully off
   }
   else
   {
     // digitalWrite(relayPin, LOW);
-    pwm.setPWM(8, 4096, 0); // turns pin fully on
+    pwm.setPWM(pwmServoDriverRelayPin1, 4096, 0); // turns pin fully on
   }
 }
 void setRelay2(boolean state)
@@ -200,12 +213,12 @@ void setRelay2(boolean state)
   if (state == true)
   {
     // digitalWrite(relayPin, HIGH);
-    pwm.setPWM(9, 0, 4096); // turns pin fully off
+    pwm.setPWM(pwmServoDriverRelayPin2, 0, 4096); // turns pin fully off
   }
   else
   {
     // digitalWrite(relayPin, LOW);
-    pwm.setPWM(9, 4096, 0); // turns pin fully on
+    pwm.setPWM(pwmServoDriverRelayPin2, 4096, 0); // turns pin fully on
   }
 }
 
@@ -551,37 +564,37 @@ void reportDutyCycle(int dutyCycle)
   if (servoState1 != servoState1Previous)
   {
     servoState1Previous = servoState1;
-    pwm.setPWM(1, 0, servoState1 * 2.3 + 120);
+    pwm.setPWM(pwmServoDriverServoPin1, 0, servoState1 * 2.3 + 120);
   }
 
   if (servoState2 != servoState2Previous)
   {
     servoState2Previous = servoState2;
-    pwm.setPWM(2, 0, servoState2 * 2.3 + 120);
+    pwm.setPWM(pwmServoDriverServoPin2, 0, servoState2 * 2.3 + 120);
   }
 
   if (servoState3 != servoState3Previous)
   {
     servoState3Previous = servoState3;
-    pwm.setPWM(3, 0, servoState3 * 2.3 + 120);
+    pwm.setPWM(pwmServoDriverServoPin3, 0, servoState3 * 2.3 + 120);
   }
 
   if (servoState4 != servoState4Previous)
   {
     servoState4Previous = servoState4;
-    pwm.setPWM(4, 0, servoState4 * 2.3 + 120);
+    pwm.setPWM(pwmServoDriverServoPin4, 0, servoState4 * 2.3 + 120);
   }
 
   if (servoState5 != servoState5Previous)
   {
     servoState5Previous = servoState5;
-    pwm.setPWM(5, 0, servoState5 * 2.3 + 120);
+    pwm.setPWM(pwmServoDriverServoPin5, 0, servoState5 * 2.3 + 120);
   }
 
   if (servoState6 != servoState6Previous)
   {
     servoState6Previous = servoState6;
-    pwm.setPWM(6, 0, servoState6 * 2.3 + 120);
+    pwm.setPWM(pwmServoDriverServoPin6, 0, servoState6 * 2.3 + 120);
   }
 
   if (direction1 != direction1Previous)
@@ -814,8 +827,8 @@ void setup()
 
 void loop()
 {
-pwm.setPWM(12, 0, 2048); // turns pin half on
-pwm.setPWM(13, 4096, 0); // turns pin fully on
+pwm.setPWM(pwmServoDriverMotorEnablePin1, 0, 2048); // turns pin half on
+pwm.setPWM(pwmServoDriverMotorDirectionPin1, 4096, 0); // turns pin fully on
   pixels.setPixelColor(0, pixels.Color(0, 255, 255));
   pixels.setPixelColor(2, pixels.Color(0, 255, 0));
   pixels.show(); // This sends the updated pixel color to the hardware.
