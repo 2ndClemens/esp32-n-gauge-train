@@ -45,6 +45,7 @@ volatile unsigned long DebounceTimer5 = millis();
 volatile unsigned long DebounceTimer6 = millis();
 volatile unsigned int delayTime = 1000;
 volatile unsigned direction2Modulo = 0;
+volatile unsigned direction3Modulo = 0;
 
 uint32_t hallSensed1 = 0;
 uint32_t hallSensed2 = 0;
@@ -54,13 +55,15 @@ uint32_t hallSensed5 = 0;
 uint32_t hallSensed6 = 0;
 
 uint32_t direction2Cycles = 0;
+uint32_t direction3Cycles = 0;
 
 /* uint32_t hallSensedPrevious1 = 0;
 uint32_t hallSensedPrevious2 = 0;
 uint32_t hallSensedPrevious3 = 0;
 uint32_t hallSensedPrevious4 = 0; */
 
-hw_timer_t *My_timer = NULL;
+hw_timer_t *My_timer1 = NULL;
+hw_timer_t *My_timer2 = NULL;
 
 int servoState1 = 0;  // double
 int servoState2 = 0;  // up out
@@ -116,13 +119,17 @@ const int pwmChannel2 = 7;
 const int resolution = 8;
 int dutyCycle1 = 0;
 int dutyCycle2 = 0;
+int dutyCycle3 = 0;
 int targetDutyCycle1 = 255;
 int targetDutyCycle2 = 255;
+int targetDutyCycle3 = 255;
 
 bool direction1 = false;
 bool direction2 = false;
+bool direction3 = false;
 bool direction1Previous = false;
 bool direction2Previous = false;
+bool direction3Previous = false;
 bool relayState1 = false;
 bool relayState2 = false;
 bool relayState1Previous = false;
@@ -177,6 +184,29 @@ void reportDirection2(bool dir2)
   // Display static text
 
   display.display();
+}
+
+void reportDirection3(bool dir3)
+{
+  direction3 = dir3;
+
+  Serial.print("Direction3: ");
+  // display.fillRect(64, 10, 128, 10, BLACK);
+  Serial.println(direction3);
+
+  //display.setCursor(64, 10);
+
+  /* if (direction3)
+  {
+    display.println("fw");
+  }
+  else
+  {
+    display.println("bw");
+  } */
+
+
+  // display.display();
 }
 
 void reportTrainCount(bool hasTwoTrains)
@@ -264,7 +294,25 @@ void setDirection2(boolean dir)
   reportDirection2(dir);
 }
 
-void IRAM_ATTR onTimer()
+void setDirection3(boolean dir)
+{
+  if (dir)
+  {
+    //digitalWrite(motor2Pin1, HIGH);
+    //digitalWrite(motor2Pin2, LOW);
+
+  }
+  else
+  {
+    //digitalWrite(motor2Pin1, LOW);
+    //digitalWrite(motor2Pin2, HIGH);
+
+  }
+
+  reportDirection3(dir);
+}
+
+void IRAM_ATTR onTimer1()
 {
   // dutyCycle2 = 0;
   direction2Cycles += 1;
@@ -307,6 +355,24 @@ void IRAM_ATTR onTimer()
   {
     servoState6 = 80;
   }
+}
+
+void IRAM_ATTR onTimer2()
+{
+  // dutyCycle2 = 0;
+  direction3Cycles += 1;
+
+  direction3Modulo = (direction3Cycles % 5);
+
+  if (direction3Modulo != 1)
+  {
+    direction3 = !direction3;
+  }
+  else
+  {
+    dutyCycle3 = 0;
+  }
+
 }
 
 void IRAM_ATTR reportSensorRead1() // inner circle sensor
@@ -641,6 +707,16 @@ void reportDutyCycle(int dutyCycle)
     targetDutyCycle2 = 255;
   }
 
+  if (direction3 != direction3Previous)
+  {
+    direction3Previous = direction3;
+
+    dutyCycle3 = 0;
+    //ledcWrite(pwmChannel2, dutyCycle2);
+    setDirection3(direction3);
+    targetDutyCycle3 = 255;
+  }
+
   if (dutyCycle1 < targetDutyCycle1)
   {
     if (targetDutyCycle1 - dutyCycle1 > 50)
@@ -815,10 +891,15 @@ void setup()
 
   reportTrainCount(true);
 
-  My_timer = timerBegin(0, 80, true);
-  timerAttachInterrupt(My_timer, &onTimer, true);
-  timerAlarmWrite(My_timer, 16000000, true);
-  timerAlarmEnable(My_timer);
+  My_timer1 = timerBegin(0, 80, true);
+  timerAttachInterrupt(My_timer1, &onTimer1, true);
+  timerAlarmWrite(My_timer1, 16000000, true);
+  timerAlarmEnable(My_timer1);
+
+    My_timer2 = timerBegin(0, 80, true);
+  timerAttachInterrupt(My_timer2, &onTimer2, true);
+  timerAlarmWrite(My_timer2, 16000000, true);
+  timerAlarmEnable(My_timer2);
 
   pwm.begin();
   pwm.setOscillatorFrequency(27000000);
