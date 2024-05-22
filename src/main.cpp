@@ -814,7 +814,8 @@ void setup()
 
 void loop()
 {
-pwm.setPWM(12, 4096, 0); // turns pin fully on
+pwm.setPWM(12, 0, 2048); // turns pin half on
+pwm.setPWM(13, 4096, 0); // turns pin fully on
   pixels.setPixelColor(0, pixels.Color(0, 255, 255));
   pixels.setPixelColor(2, pixels.Color(0, 255, 0));
   pixels.show(); // This sends the updated pixel color to the hardware.
