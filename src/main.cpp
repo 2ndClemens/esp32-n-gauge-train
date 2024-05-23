@@ -63,7 +63,7 @@ uint32_t hallSensedPrevious3 = 0;
 uint32_t hallSensedPrevious4 = 0; */
 
 hw_timer_t *My_timer1 = NULL;
-hw_timer_t *My_timer2 = NULL;
+hw_timer_s *My_timer2 = NULL;
 
 int servoState1 = 0;  // double
 int servoState2 = 0;  // up out
@@ -362,15 +362,16 @@ void IRAM_ATTR onTimer2()
   // dutyCycle2 = 0;
   direction3Cycles += 1;
 
-  direction3Modulo = (direction3Cycles % 5);
+  direction3Modulo = (direction3Cycles % 2);
 
   if (direction3Modulo != 1)
   {
-    direction3 = !direction3;
+    // direction3 = !direction3;
+    targetDutyCycle3 = 255;
   }
   else
   {
-    dutyCycle3 = 0;
+    targetDutyCycle3 = 0;
   }
 
 }
@@ -740,9 +741,23 @@ void reportDutyCycle(int dutyCycle)
     dutyCycle2++;
   }
 
-  if (dutyCycle2 > targetDutyCycle2)
+  if (dutyCycle3 > targetDutyCycle3)
   {
-    dutyCycle2--;
+    dutyCycle3--;
+  }
+
+  if (dutyCycle3 < targetDutyCycle3)
+  {
+    if (targetDutyCycle3 - dutyCycle3 > 50)
+    {
+      dutyCycle3 += 20;
+    }
+    dutyCycle3++;
+  }
+
+  if (dutyCycle3 > targetDutyCycle3)
+  {
+    dutyCycle3--;
   }
 
   display.fillRect(0, 20, 64, 10, BLACK);
@@ -783,6 +798,9 @@ void reportDutyCycle(int dutyCycle)
 
   ledcWrite(pwmChannel1, dutyCycle1);
   ledcWrite(pwmChannel2, dutyCycle2);
+ 
+  pwm.setPWM(pwmServoDriverMotorDirectionPin1, 4096, 0); // turns pin fully on
+  pwm.setPWM(pwmServoDriverMotorEnablePin1, 0, dutyCycle3*8+1); // turns pin max half on
   // Serial.print("Duty cycle: ");
   // Serial.println(dutyCycle);
   display.fillRect(0, 0, 128, 10, BLACK);
@@ -896,9 +914,9 @@ void setup()
   timerAlarmWrite(My_timer1, 16000000, true);
   timerAlarmEnable(My_timer1);
 
-    My_timer2 = timerBegin(0, 80, true);
+    My_timer2 = timerBegin(1, 80, true);
   timerAttachInterrupt(My_timer2, &onTimer2, true);
-  timerAlarmWrite(My_timer2, 16000000, true);
+  timerAlarmWrite(My_timer2, 24000000, true);
   timerAlarmEnable(My_timer2);
 
   pwm.begin();
@@ -908,13 +926,14 @@ void setup()
 
 void loop()
 {
-pwm.setPWM(pwmServoDriverMotorEnablePin1, 0, 2048); // turns pin half on
-pwm.setPWM(pwmServoDriverMotorDirectionPin1, 4096, 0); // turns pin fully on
+
+
   pixels.setPixelColor(0, pixels.Color(0, 255, 255));
   pixels.setPixelColor(2, pixels.Color(0, 255, 0));
   pixels.show(); // This sends the updated pixel color to the hardware.
 
   reportDutyCycle(dutyCycle1);
   reportDutyCycle(dutyCycle2);
+  reportDutyCycle(dutyCycle3);
   delay(200);
 }
