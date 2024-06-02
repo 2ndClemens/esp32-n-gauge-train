@@ -45,6 +45,7 @@ volatile unsigned long DebounceTimer5 = millis();
 volatile unsigned long DebounceTimer6 = millis();
 volatile unsigned int delayTime = 1000;
 volatile unsigned direction2Modulo = 0;
+volatile unsigned direction3Modulo = 0;
 
 uint32_t hallSensed1 = 0;
 uint32_t hallSensed2 = 0;
@@ -54,13 +55,15 @@ uint32_t hallSensed5 = 0;
 uint32_t hallSensed6 = 0;
 
 uint32_t direction2Cycles = 0;
+uint32_t direction3Cycles = 0;
 
 /* uint32_t hallSensedPrevious1 = 0;
 uint32_t hallSensedPrevious2 = 0;
 uint32_t hallSensedPrevious3 = 0;
 uint32_t hallSensedPrevious4 = 0; */
 
-hw_timer_t *My_timer = NULL;
+hw_timer_t *My_timer1 = NULL;
+hw_timer_s *My_timer2 = NULL;
 
 int servoState1 = 0;  // double
 int servoState2 = 0;  // up out
@@ -92,6 +95,19 @@ int sensorPin4 = 32; // Digital-Pin
 int sensorPin5 = 35; // Digital-Pin
 int sensorPin6 = 34; // Digital-Pin
 
+int pwmServoDriverServoPin1 = 1;
+int pwmServoDriverServoPin2 = 2;
+int pwmServoDriverServoPin3 = 3;
+int pwmServoDriverServoPin4 = 4;
+int pwmServoDriverServoPin5 = 5;
+int pwmServoDriverServoPin6 = 6;
+
+int pwmServoDriverRelayPin1 = 8;
+int pwmServoDriverRelayPin2 = 9;
+
+int pwmServoDriverMotorEnablePin1 = 12;
+int pwmServoDriverMotorDirectionPin1 = 13;
+
 // int relayPin = 14;
 
 bool twoTrains = true;
@@ -103,13 +119,17 @@ const int pwmChannel2 = 7;
 const int resolution = 8;
 int dutyCycle1 = 0;
 int dutyCycle2 = 0;
+int dutyCycle3 = 0;
 int targetDutyCycle1 = 255;
 int targetDutyCycle2 = 255;
+int targetDutyCycle3 = 255;
 
 bool direction1 = false;
 bool direction2 = false;
+bool direction3 = false;
 bool direction1Previous = false;
 bool direction2Previous = false;
+bool direction3Previous = false;
 bool relayState1 = false;
 bool relayState2 = false;
 bool relayState1Previous = false;
@@ -166,6 +186,29 @@ void reportDirection2(bool dir2)
   display.display();
 }
 
+void reportDirection3(bool dir3)
+{
+  direction3 = dir3;
+
+  Serial.print("Direction3: ");
+  // display.fillRect(64, 10, 128, 10, BLACK);
+  Serial.println(direction3);
+
+  //display.setCursor(64, 10);
+
+  /* if (direction3)
+  {
+    display.println("fw");
+  }
+  else
+  {
+    display.println("bw");
+  } */
+
+
+  // display.display();
+}
+
 void reportTrainCount(bool hasTwoTrains)
 {
   twoTrains = hasTwoTrains;
@@ -187,12 +230,12 @@ void setRelay1(boolean state)
   if (state == true)
   {
     // digitalWrite(relayPin, HIGH);
-    pwm.setPWM(8, 0, 4096); // turns pin fully off
+    pwm.setPWM(pwmServoDriverRelayPin1, 0, 4096); // turns pin fully off
   }
   else
   {
     // digitalWrite(relayPin, LOW);
-    pwm.setPWM(8, 4096, 0); // turns pin fully on
+    pwm.setPWM(pwmServoDriverRelayPin1, 4096, 0); // turns pin fully on
   }
 }
 void setRelay2(boolean state)
@@ -200,12 +243,12 @@ void setRelay2(boolean state)
   if (state == true)
   {
     // digitalWrite(relayPin, HIGH);
-    pwm.setPWM(9, 0, 4096); // turns pin fully off
+    pwm.setPWM(pwmServoDriverRelayPin2, 0, 4096); // turns pin fully off
   }
   else
   {
     // digitalWrite(relayPin, LOW);
-    pwm.setPWM(9, 4096, 0); // turns pin fully on
+    pwm.setPWM(pwmServoDriverRelayPin2, 4096, 0); // turns pin fully on
   }
 }
 
@@ -251,7 +294,25 @@ void setDirection2(boolean dir)
   reportDirection2(dir);
 }
 
-void IRAM_ATTR onTimer()
+void setDirection3(boolean dir)
+{
+  if (dir)
+  {
+    //digitalWrite(motor2Pin1, HIGH);
+    //digitalWrite(motor2Pin2, LOW);
+
+  }
+  else
+  {
+    //digitalWrite(motor2Pin1, LOW);
+    //digitalWrite(motor2Pin2, HIGH);
+
+  }
+
+  reportDirection3(dir);
+}
+
+void IRAM_ATTR onTimer1()
 {
   // dutyCycle2 = 0;
   direction2Cycles += 1;
@@ -294,6 +355,25 @@ void IRAM_ATTR onTimer()
   {
     servoState6 = 80;
   }
+}
+
+void IRAM_ATTR onTimer2()
+{
+  // dutyCycle2 = 0;
+  direction3Cycles += 1;
+
+  direction3Modulo = (direction3Cycles % 2);
+
+  if (direction3Modulo != 1)
+  {
+    // direction3 = !direction3;
+    targetDutyCycle3 = 255;
+  }
+  else
+  {
+    targetDutyCycle3 = 0;
+  }
+
 }
 
 void IRAM_ATTR reportSensorRead1() // inner circle sensor
@@ -551,37 +631,37 @@ void reportDutyCycle(int dutyCycle)
   if (servoState1 != servoState1Previous)
   {
     servoState1Previous = servoState1;
-    pwm.setPWM(1, 0, servoState1 * 2.3 + 120);
+    pwm.setPWM(pwmServoDriverServoPin1, 0, servoState1 * 2.3 + 120);
   }
 
   if (servoState2 != servoState2Previous)
   {
     servoState2Previous = servoState2;
-    pwm.setPWM(2, 0, servoState2 * 2.3 + 120);
+    pwm.setPWM(pwmServoDriverServoPin2, 0, servoState2 * 2.3 + 120);
   }
 
   if (servoState3 != servoState3Previous)
   {
     servoState3Previous = servoState3;
-    pwm.setPWM(3, 0, servoState3 * 2.3 + 120);
+    pwm.setPWM(pwmServoDriverServoPin3, 0, servoState3 * 2.3 + 120);
   }
 
   if (servoState4 != servoState4Previous)
   {
     servoState4Previous = servoState4;
-    pwm.setPWM(4, 0, servoState4 * 2.3 + 120);
+    pwm.setPWM(pwmServoDriverServoPin4, 0, servoState4 * 2.3 + 120);
   }
 
   if (servoState5 != servoState5Previous)
   {
     servoState5Previous = servoState5;
-    pwm.setPWM(5, 0, servoState5 * 2.3 + 120);
+    pwm.setPWM(pwmServoDriverServoPin5, 0, servoState5 * 2.3 + 120);
   }
 
   if (servoState6 != servoState6Previous)
   {
     servoState6Previous = servoState6;
-    pwm.setPWM(6, 0, servoState6 * 2.3 + 120);
+    pwm.setPWM(pwmServoDriverServoPin6, 0, servoState6 * 2.3 + 120);
   }
 
   if (direction1 != direction1Previous)
@@ -628,6 +708,16 @@ void reportDutyCycle(int dutyCycle)
     targetDutyCycle2 = 255;
   }
 
+  if (direction3 != direction3Previous)
+  {
+    direction3Previous = direction3;
+
+    dutyCycle3 = 0;
+    //ledcWrite(pwmChannel2, dutyCycle2);
+    setDirection3(direction3);
+    targetDutyCycle3 = 255;
+  }
+
   if (dutyCycle1 < targetDutyCycle1)
   {
     if (targetDutyCycle1 - dutyCycle1 > 50)
@@ -651,9 +741,23 @@ void reportDutyCycle(int dutyCycle)
     dutyCycle2++;
   }
 
-  if (dutyCycle2 > targetDutyCycle2)
+  if (dutyCycle3 > targetDutyCycle3)
   {
-    dutyCycle2--;
+    dutyCycle3--;
+  }
+
+  if (dutyCycle3 < targetDutyCycle3)
+  {
+    if (targetDutyCycle3 - dutyCycle3 > 50)
+    {
+      dutyCycle3 += 20;
+    }
+    dutyCycle3++;
+  }
+
+  if (dutyCycle3 > targetDutyCycle3)
+  {
+    dutyCycle3--;
   }
 
   display.fillRect(0, 20, 64, 10, BLACK);
@@ -694,6 +798,9 @@ void reportDutyCycle(int dutyCycle)
 
   ledcWrite(pwmChannel1, dutyCycle1);
   ledcWrite(pwmChannel2, dutyCycle2);
+ 
+  pwm.setPWM(pwmServoDriverMotorDirectionPin1, 4096, 0); // turns pin fully on
+  pwm.setPWM(pwmServoDriverMotorEnablePin1, 0, dutyCycle3*8+1); // turns pin max half on
   // Serial.print("Duty cycle: ");
   // Serial.println(dutyCycle);
   display.fillRect(0, 0, 128, 10, BLACK);
@@ -802,10 +909,15 @@ void setup()
 
   reportTrainCount(true);
 
-  My_timer = timerBegin(0, 80, true);
-  timerAttachInterrupt(My_timer, &onTimer, true);
-  timerAlarmWrite(My_timer, 16000000, true);
-  timerAlarmEnable(My_timer);
+  My_timer1 = timerBegin(0, 80, true);
+  timerAttachInterrupt(My_timer1, &onTimer1, true);
+  timerAlarmWrite(My_timer1, 16000000, true);
+  timerAlarmEnable(My_timer1);
+
+    My_timer2 = timerBegin(1, 80, true);
+  timerAttachInterrupt(My_timer2, &onTimer2, true);
+  timerAlarmWrite(My_timer2, 24000000, true);
+  timerAlarmEnable(My_timer2);
 
   pwm.begin();
   pwm.setOscillatorFrequency(27000000);
@@ -814,12 +926,14 @@ void setup()
 
 void loop()
 {
-pwm.setPWM(12, 4096, 0); // turns pin fully on
+
+
   pixels.setPixelColor(0, pixels.Color(0, 255, 255));
   pixels.setPixelColor(2, pixels.Color(0, 255, 0));
   pixels.show(); // This sends the updated pixel color to the hardware.
 
   reportDutyCycle(dutyCycle1);
   reportDutyCycle(dutyCycle2);
+  reportDutyCycle(dutyCycle3);
   delay(200);
 }
